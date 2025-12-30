@@ -1,12 +1,38 @@
+--// SERVICES
+local Players = game:GetService("Players")
+local Lighting = game:GetService("Lighting")
+local player = Players.LocalPlayer
+
+--// GUI SETUP
+local gui = Instance.new("ScreenGui")
+gui.Name = "FPSGraphicsGui"
+gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
+
+local panel = Instance.new("Frame")
+panel.Size = UDim2.new(0, 270, 0, 190)
+panel.Position = UDim2.new(0, 20, 0.5, -95)
+panel.BackgroundColor3 = Color3.fromRGB(15,15,15)
+panel.BorderSizePixel = 0
+panel.Parent = gui
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 8)
+corner.Parent = panel
+
 --------------------------------------------------
--- LEFT: Graphics Presets (scrollable, restorable)
+-- LEFT: Graphics Presets
 --------------------------------------------------
 local gfxFrame = Instance.new("Frame")
 gfxFrame.Name = "GraphicsFrame"
 gfxFrame.Size = UDim2.new(0, 125, 0, 180)
-gfxFrame.Position = UDim2.new(0, 0, 0, 0)
+gfxFrame.Position = UDim2.new(0, 5, 0, 5)
 gfxFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
 gfxFrame.Parent = panel
+
+local gfxCorner = Instance.new("UICorner")
+gfxCorner.CornerRadius = UDim.new(0, 6)
+gfxCorner.Parent = gfxFrame
 
 local gfxHeader = Instance.new("TextLabel")
 gfxHeader.Size = UDim2.new(1, 0, 0, 22)
@@ -18,7 +44,6 @@ gfxHeader.TextSize = 16
 gfxHeader.Parent = gfxFrame
 
 local presetsScroll = Instance.new("ScrollingFrame")
-presetsScroll.Name = "PresetsScroll"
 presetsScroll.Size = UDim2.new(1, -6, 1, -26)
 presetsScroll.Position = UDim2.new(0, 3, 0, 24)
 presetsScroll.BackgroundTransparency = 1
@@ -28,11 +53,11 @@ presetsScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
 presetsScroll.Parent = gfxFrame
 
 local listLayout = Instance.new("UIListLayout")
-listLayout.Parent = presetsScroll
 listLayout.Padding = UDim.new(0, 4)
+listLayout.Parent = presetsScroll
 
 --------------------------------------------------
--- Backend: cache originals (with auto-refresh)
+-- BACKEND: Cache originals
 --------------------------------------------------
 local originalData = {}
 
@@ -50,78 +75,88 @@ local function cacheObject(obj)
     end
 end
 
--- Initial cache
-for _, obj in pairs(workspace:GetDescendants()) do
+for _, obj in ipairs(workspace:GetDescendants()) do
     cacheObject(obj)
 end
 
--- Auto-cache new objects
-workspace.DescendantAdded:Connect(function(obj)
-    cacheObject(obj)
-end)
+workspace.DescendantAdded:Connect(cacheObject)
 
 local function restoreDefaults()
     for obj, data in pairs(originalData) do
-        if obj:IsA("BasePart") then
-            obj.Material = data.Material
-            obj.Color = data.Color
-            obj.CastShadow = data.CastShadow
-        elseif obj:IsA("Decal") or obj:IsA("Texture") then
-            obj.Transparency = data.Transparency
+        if obj and obj.Parent then
+            if obj:IsA("BasePart") then
+                obj.Material = data.Material
+                obj.Color = data.Color
+                obj.CastShadow = data.CastShadow
+            elseif obj:IsA("Decal") or obj:IsA("Texture") then
+                obj.Transparency = data.Transparency
+            end
         end
     end
 end
 
 --------------------------------------------------
--- Preset actions
+-- PRESET LOGIC
 --------------------------------------------------
 local function applyPreset(p)
     if p == "Default" then
         restoreDefaults()
+        Lighting.GlobalShadows = true
         return
     end
 
     if p == "PostEffectsOff" or p == "ExtraLow" or p == "UltraLow" then
-        for _, effect in pairs(Lighting:GetChildren()) do
-            if effect:IsA("PostEffect") then effect.Enabled = false end
+        for _, e in ipairs(Lighting:GetChildren()) do
+            if e:IsA("PostEffect") then
+                e.Enabled = false
+            end
         end
     end
 
     if p == "ShadowsOff" or p == "ExtraLow" or p == "UltraLow" then
         Lighting.GlobalShadows = false
-        for _, part in pairs(workspace:GetDescendants()) do
-            if part:IsA("BasePart") then part.CastShadow = false end
+        for _, part in ipairs(workspace:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CastShadow = false
+            end
         end
     end
 
     if p == "DecalsOff" or p == "TexturesOff" or p == "ExtraLow" or p == "UltraLow" then
-        for _, d in pairs(workspace:GetDescendants()) do
-            if d:IsA("Decal") or d:IsA("Texture") then d.Transparency = 1 end
+        for _, d in ipairs(workspace:GetDescendants()) do
+            if d:IsA("Decal") or d:IsA("Texture") then
+                d.Transparency = 1
+            end
         end
     end
 
     if p == "SmoothPlastic" or p == "ExtraLow" or p == "UltraLow" then
-        for _, part in pairs(workspace:GetDescendants()) do
-            if part:IsA("BasePart") then part.Material = Enum.Material.SmoothPlastic end
+        for _, part in ipairs(workspace:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.Material = Enum.Material.SmoothPlastic
+            end
         end
     end
 
     if p == "TerrainSimplify" or p == "ExtraLow" or p == "UltraLow" then
-        workspace.Terrain.WaterWaveSize = 0
-        workspace.Terrain.WaterWaveSpeed = 0
-        workspace.Terrain.WaterReflectance = 0
-        workspace.Terrain.WaterTransparency = 1
+        local t = workspace.Terrain
+        t.WaterWaveSize = 0
+        t.WaterWaveSpeed = 0
+        t.WaterReflectance = 0
+        t.WaterTransparency = 1
     end
 
     if p == "UltraLow" then
-        for _, part in pairs(workspace:GetDescendants()) do
-            if part:IsA("BasePart") then part.Color = Color3.new(0,0,0) end
+        for _, part in ipairs(workspace:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.Color = Color3.new(0,0,0)
+            end
         end
     end
 end
 
 --------------------------------------------------
--- Preset list (all options visible)
+-- PRESET BUTTONS
 --------------------------------------------------
 local presetOptions = {
     "Default",
@@ -141,23 +176,31 @@ for _, name in ipairs(presetOptions) do
     b.BackgroundColor3 = Color3.fromRGB(40,40,40)
     b.TextColor3 = Color3.fromRGB(255,255,255)
     b.Text = name
+    b.Font = Enum.Font.SourceSans
+    b.TextSize = 14
     b.Parent = presetsScroll
+
     b.MouseButton1Click:Connect(function()
         applyPreset(name)
         b.BackgroundColor3 = Color3.fromRGB(0,100,0)
-        task.delay(0.2, function() b.BackgroundColor3 = Color3.fromRGB(40,40,40) end)
+        task.delay(0.25, function()
+            b.BackgroundColor3 = Color3.fromRGB(40,40,40)
+        end)
     end)
 end
 
 --------------------------------------------------
--- RIGHT: FPS caps (exclusive highlight)
+-- RIGHT: FPS CAP
 --------------------------------------------------
 local fpsFrame = Instance.new("Frame")
-fpsFrame.Name = "FPSFrame"
 fpsFrame.Size = UDim2.new(0, 125, 0, 180)
-fpsFrame.Position = UDim2.new(0, 135, 0, 0) -- side by side with presets
+fpsFrame.Position = UDim2.new(0, 140, 0, 5)
 fpsFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
 fpsFrame.Parent = panel
+
+local fpsCorner = Instance.new("UICorner")
+fpsCorner.CornerRadius = UDim.new(0, 6)
+fpsCorner.Parent = fpsFrame
 
 local fpsHeader = Instance.new("TextLabel")
 fpsHeader.Size = UDim2.new(1, 0, 0, 22)
@@ -175,48 +218,45 @@ fpsList.BackgroundTransparency = 1
 fpsList.Parent = fpsFrame
 
 local fpsLayout = Instance.new("UIListLayout")
-fpsLayout.Parent = fpsList
 fpsLayout.Padding = UDim.new(0, 4)
+fpsLayout.Parent = fpsList
 
 local function findCapper()
-    local g = getgenv and getgenv() or {}
-    return g.setfpscap or _G.setfpscap or setfpscap or (syn and (syn.set_fps or syn.setfpscap))
+    local g = (getgenv and getgenv()) or {}
+    return g.setfpscap or _G.setfpscap or setfpscap or (syn and syn.setfpscap)
 end
+
 local cap = findCapper()
-
--- Track all FPS buttons for exclusive highlight
 local fpsButtons = {}
-local function setFPSHighlight(selectedBtn)
-    for _, btn in ipairs(fpsButtons) do
-        btn.BackgroundColor3 = Color3.fromRGB(40,40,40) -- reset all to gray
+
+local function highlight(btn)
+    for _, b in ipairs(fpsButtons) do
+        b.BackgroundColor3 = Color3.fromRGB(40,40,40)
     end
-    selectedBtn.BackgroundColor3 = Color3.fromRGB(0,100,0) -- green for active
+    btn.BackgroundColor3 = Color3.fromRGB(0,100,0)
 end
 
-local fpsValues = {20,25,30,35,40,45,50,55,60,"Unlimited"}
-for _, v in ipairs(fpsValues) do
+for _, v in ipairs({20,25,30,40,50,60,"Unlimited"}) do
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, 0, 0, 22)
     btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
     btn.TextColor3 = Color3.fromRGB(255,255,255)
     btn.Text = tostring(v)
+    btn.Font = Enum.Font.SourceSans
+    btn.TextSize = 14
     btn.Parent = fpsList
     table.insert(fpsButtons, btn)
 
     btn.MouseButton1Click:Connect(function()
         if cap then
-            if v == "Unlimited" then
-                cap(1000)
-            else
-                cap(v)
-            end
-            setFPSHighlight(btn)
+            cap(v == "Unlimited" and 1000 or v)
+            highlight(btn)
         else
-            btn.Text = tostring(v).." (No API)"
+            btn.Text = "No API"
             btn.BackgroundColor3 = Color3.fromRGB(100,0,0)
             task.delay(0.6, function()
-                btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
                 btn.Text = tostring(v)
+                btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
             end)
         end
     end)
