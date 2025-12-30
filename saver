@@ -3,17 +3,22 @@ local Players = game:GetService("Players")
 local Lighting = game:GetService("Lighting")
 local player = Players.LocalPlayer
 
---// GUI SETUP
+--// GUI SETUP (PlayerList-friendly)
 local gui = Instance.new("ScreenGui")
 gui.Name = "FPSGraphicsGui"
 gui.ResetOnSpawn = false
+gui.DisplayOrder = 1
+gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+gui.IgnoreGuiInset = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
 local panel = Instance.new("Frame")
 panel.Size = UDim2.new(0, 270, 0, 190)
-panel.Position = UDim2.new(0, 20, 0.5, -95)
+panel.AnchorPoint = Vector2.new(1, 0)
+panel.Position = UDim2.new(1, -10, 0, 60) -- where PlayerList starts
 panel.BackgroundColor3 = Color3.fromRGB(15,15,15)
 panel.BorderSizePixel = 0
+panel.ZIndex = 1
 panel.Parent = gui
 
 local corner = Instance.new("UICorner")
@@ -24,10 +29,11 @@ corner.Parent = panel
 -- LEFT: Graphics Presets
 --------------------------------------------------
 local gfxFrame = Instance.new("Frame")
-gfxFrame.Name = "GraphicsFrame"
 gfxFrame.Size = UDim2.new(0, 125, 0, 180)
 gfxFrame.Position = UDim2.new(0, 5, 0, 5)
 gfxFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
+gfxFrame.BorderSizePixel = 0
+gfxFrame.ZIndex = 1
 gfxFrame.Parent = panel
 
 local gfxCorner = Instance.new("UICorner")
@@ -41,6 +47,7 @@ gfxHeader.TextColor3 = Color3.fromRGB(255,255,255)
 gfxHeader.Text = "Graphics Presets"
 gfxHeader.Font = Enum.Font.SourceSansBold
 gfxHeader.TextSize = 16
+gfxHeader.ZIndex = 1
 gfxHeader.Parent = gfxFrame
 
 local presetsScroll = Instance.new("ScrollingFrame")
@@ -50,6 +57,7 @@ presetsScroll.BackgroundTransparency = 1
 presetsScroll.ScrollBarThickness = 6
 presetsScroll.CanvasSize = UDim2.new(0,0,0,0)
 presetsScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+presetsScroll.ZIndex = 1
 presetsScroll.Parent = gfxFrame
 
 local listLayout = Instance.new("UIListLayout")
@@ -178,6 +186,7 @@ for _, name in ipairs(presetOptions) do
     b.Text = name
     b.Font = Enum.Font.SourceSans
     b.TextSize = 14
+    b.ZIndex = 1
     b.Parent = presetsScroll
 
     b.MouseButton1Click:Connect(function()
@@ -196,6 +205,8 @@ local fpsFrame = Instance.new("Frame")
 fpsFrame.Size = UDim2.new(0, 125, 0, 180)
 fpsFrame.Position = UDim2.new(0, 140, 0, 5)
 fpsFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
+fpsFrame.BorderSizePixel = 0
+fpsFrame.ZIndex = 1
 fpsFrame.Parent = panel
 
 local fpsCorner = Instance.new("UICorner")
@@ -209,12 +220,14 @@ fpsHeader.TextColor3 = Color3.fromRGB(255,255,255)
 fpsHeader.Text = "FPS Cap"
 fpsHeader.Font = Enum.Font.SourceSansBold
 fpsHeader.TextSize = 16
+fpsHeader.ZIndex = 1
 fpsHeader.Parent = fpsFrame
 
 local fpsList = Instance.new("Frame")
 fpsList.Size = UDim2.new(1, -6, 1, -26)
 fpsList.Position = UDim2.new(0, 3, 0, 24)
 fpsList.BackgroundTransparency = 1
+fpsList.ZIndex = 1
 fpsList.Parent = fpsFrame
 
 local fpsLayout = Instance.new("UIListLayout")
@@ -244,6 +257,7 @@ for _, v in ipairs({20,25,30,40,50,60,"Unlimited"}) do
     btn.Text = tostring(v)
     btn.Font = Enum.Font.SourceSans
     btn.TextSize = 14
+    btn.ZIndex = 1
     btn.Parent = fpsList
     table.insert(fpsButtons, btn)
 
