@@ -2,6 +2,7 @@
 -- LEFT: Graphics Presets (scrollable, restorable, draggable, collapsible)
 --------------------------------------------------
 local UserInputService = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
 
 local gfxFrame = Instance.new("Frame")
 gfxFrame.Name = "GraphicsFrame"
@@ -11,11 +12,11 @@ gfxFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
 gfxFrame.Parent = panel
 
 -- Top bar for dragging + toggle
-local gfxTopBar = Instance.new("Frame")
-gfxTopBar.Name = "TopBar"
-gfxTopBar.Size = UDim2.new(1, 0, 0, 22)
-gfxTopBar.BackgroundColor3 = Color3.fromRGB(30,30,30)
-gfxTopBar.Parent = gfxFrame
+local topBar = Instance.new("Frame")
+topBar.Name = "TopBar"
+topBar.Size = UDim2.new(1, 0, 0, 22)
+topBar.BackgroundColor3 = Color3.fromRGB(30,30,30)
+topBar.Parent = gfxFrame
 
 local gfxHeader = Instance.new("TextLabel")
 gfxHeader.Size = UDim2.new(1, -22, 1, 0)
@@ -24,23 +25,25 @@ gfxHeader.TextColor3 = Color3.fromRGB(255,255,255)
 gfxHeader.Text = "Graphics Presets"
 gfxHeader.Font = Enum.Font.SourceSansBold
 gfxHeader.TextSize = 16
-gfxHeader.Parent = gfxTopBar
+gfxHeader.Parent = topBar
 
-local gfxToggleBtn = Instance.new("TextButton")
-gfxToggleBtn.Size = UDim2.new(0, 22, 1, 0)
-gfxToggleBtn.Position = UDim2.new(1, -22, 0, 0)
-gfxToggleBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
-gfxToggleBtn.TextColor3 = Color3.fromRGB(255,255,255)
-gfxToggleBtn.Text = "▼"
-gfxToggleBtn.Font = Enum.Font.SourceSansBold
-gfxToggleBtn.TextSize = 16
-gfxToggleBtn.Parent = gfxTopBar
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Size = UDim2.new(0, 22, 1, 0)
+toggleBtn.Position = UDim2.new(1, -22, 0, 0)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+toggleBtn.TextColor3 = Color3.fromRGB(255,255,255)
+toggleBtn.Text = "▼"
+toggleBtn.Font = Enum.Font.SourceSansBold
+toggleBtn.TextSize = 16
+toggleBtn.Parent = topBar
 
 local presetsScroll = Instance.new("ScrollingFrame")
+presetsScroll.Name = "PresetsScroll"
 presetsScroll.Size = UDim2.new(1, -6, 1, -26)
 presetsScroll.Position = UDim2.new(0, 3, 0, 24)
 presetsScroll.BackgroundTransparency = 1
 presetsScroll.ScrollBarThickness = 6
+presetsScroll.CanvasSize = UDim2.new(0,0,0,0)
 presetsScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
 presetsScroll.Parent = gfxFrame
 
@@ -49,7 +52,7 @@ listLayout.Parent = presetsScroll
 listLayout.Padding = UDim.new(0, 4)
 
 --------------------------------------------------
--- Backend: cache originals
+-- Backend: cache originals (with auto-refresh)
 --------------------------------------------------
 local originalData = {}
 
@@ -71,7 +74,9 @@ for _, obj in pairs(workspace:GetDescendants()) do
     cacheObject(obj)
 end
 
-workspace.DescendantAdded:Connect(cacheObject)
+workspace.DescendantAdded:Connect(function(obj)
+    cacheObject(obj)
+end)
 
 local function restoreDefaults()
     for obj, data in pairs(originalData) do
@@ -88,8 +93,6 @@ end
 --------------------------------------------------
 -- Preset actions
 --------------------------------------------------
-local Lighting = game:GetService("Lighting")
-
 local function applyPreset(p)
     if p == "Default" then
         restoreDefaults()
@@ -122,11 +125,10 @@ local function applyPreset(p)
     end
 
     if p == "TerrainSimplify" or p == "ExtraLow" or p == "UltraLow" then
-        local t = workspace.Terrain
-        t.WaterWaveSize = 0
-        t.WaterWaveSpeed = 0
-        t.WaterReflectance = 0
-        t.WaterTransparency = 1
+        workspace.Terrain.WaterWaveSize = 0
+        workspace.Terrain.WaterWaveSpeed = 0
+        workspace.Terrain.WaterReflectance = 0
+        workspace.Terrain.WaterTransparency = 1
     end
 
     if p == "UltraLow" then
@@ -140,8 +142,15 @@ end
 -- Preset list
 --------------------------------------------------
 local presetOptions = {
-    "Default","PostEffectsOff","ShadowsOff","DecalsOff","TexturesOff",
-    "SmoothPlastic","TerrainSimplify","ExtraLow","UltraLow"
+    "Default",
+    "PostEffectsOff",
+    "ShadowsOff",
+    "DecalsOff",
+    "TexturesOff",
+    "SmoothPlastic",
+    "TerrainSimplify",
+    "ExtraLow",
+    "UltraLow"
 }
 
 for _, name in ipairs(presetOptions) do
@@ -161,17 +170,18 @@ for _, name in ipairs(presetOptions) do
 end
 
 --------------------------------------------------
--- GRAPHICS DROPDOWN (FIXED)
+-- DROPDOWN TOGGLE (FIXED - GRAPHICS)
 --------------------------------------------------
 local gfxOpen = true
 local gfxExpandedSize = gfxFrame.Size
 
-gfxToggleBtn.MouseButton1Click:Connect(function()
+toggleBtn.MouseButton1Click:Connect(function()
     gfxOpen = not gfxOpen
-    gfxToggleBtn.Text = gfxOpen and "▼" or "▶"
+    toggleBtn.Text = gfxOpen and "▼" or "▶"
 
     gfxFrame:TweenSize(
-        gfxOpen and gfxExpandedSize or UDim2.new(gfxExpandedSize.X.Scale, gfxExpandedSize.X.Offset, 0, 26),
+        gfxOpen and gfxExpandedSize
+            or UDim2.new(gfxExpandedSize.X.Scale, gfxExpandedSize.X.Offset, 0, 26),
         Enum.EasingDirection.Out,
         Enum.EasingStyle.Quad,
         0.2,
@@ -180,7 +190,7 @@ gfxToggleBtn.MouseButton1Click:Connect(function()
 end)
 
 --------------------------------------------------
--- RIGHT: FPS caps (exclusive highlight, draggable, collapsible)
+-- RIGHT: FPS caps (exclusive highlight, collapsible)
 --------------------------------------------------
 local fpsFrame = Instance.new("Frame")
 fpsFrame.Name = "FPSFrame"
@@ -189,10 +199,11 @@ fpsFrame.Position = UDim2.new(0, 135, 0, 0)
 fpsFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
 fpsFrame.Parent = panel
 
-local fpsTopBar = Instance.new("Frame")
-fpsTopBar.Size = UDim2.new(1, 0, 0, 22)
-fpsTopBar.BackgroundColor3 = Color3.fromRGB(30,30,30)
-fpsTopBar.Parent = fpsFrame
+local topBar2 = Instance.new("Frame")
+topBar2.Name = "TopBar"
+topBar2.Size = UDim2.new(1, 0, 0, 22)
+topBar2.BackgroundColor3 = Color3.fromRGB(30,30,30)
+topBar2.Parent = fpsFrame
 
 local fpsHeader = Instance.new("TextLabel")
 fpsHeader.Size = UDim2.new(1, -22, 1, 0)
@@ -201,17 +212,17 @@ fpsHeader.TextColor3 = Color3.fromRGB(255,255,255)
 fpsHeader.Text = "FPS Cap"
 fpsHeader.Font = Enum.Font.SourceSansBold
 fpsHeader.TextSize = 16
-fpsHeader.Parent = fpsTopBar
+fpsHeader.Parent = topBar2
 
-local fpsToggleBtn = Instance.new("TextButton")
-fpsToggleBtn.Size = UDim2.new(0, 22, 1, 0)
-fpsToggleBtn.Position = UDim2.new(1, -22, 0, 0)
-fpsToggleBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
-fpsToggleBtn.TextColor3 = Color3.fromRGB(255,255,255)
-fpsToggleBtn.Text = "▼"
-fpsToggleBtn.Font = Enum.Font.SourceSansBold
-fpsToggleBtn.TextSize = 16
-fpsToggleBtn.Parent = fpsTopBar
+local toggleBtn2 = Instance.new("TextButton")
+toggleBtn2.Size = UDim2.new(0, 22, 1, 0)
+toggleBtn2.Position = UDim2.new(1, -22, 0, 0)
+toggleBtn2.BackgroundColor3 = Color3.fromRGB(40,40,40)
+toggleBtn2.TextColor3 = Color3.fromRGB(255,255,255)
+toggleBtn2.Text = "▼"
+toggleBtn2.Font = Enum.Font.SourceSansBold
+toggleBtn2.TextSize = 16
+toggleBtn2.Parent = topBar2
 
 local fpsList = Instance.new("Frame")
 fpsList.Size = UDim2.new(1, -6, 1, -26)
@@ -220,17 +231,18 @@ fpsList.BackgroundTransparency = 1
 fpsList.Parent = fpsFrame
 
 --------------------------------------------------
--- FPS DROPDOWN (FIXED)
+-- DROPDOWN TOGGLE (FIXED - FPS)
 --------------------------------------------------
 local fpsOpen = true
 local fpsExpandedSize = fpsFrame.Size
 
-fpsToggleBtn.MouseButton1Click:Connect(function()
+toggleBtn2.MouseButton1Click:Connect(function()
     fpsOpen = not fpsOpen
-    fpsToggleBtn.Text = fpsOpen and "▼" or "▶"
+    toggleBtn2.Text = fpsOpen and "▼" or "▶"
 
     fpsFrame:TweenSize(
-        fpsOpen and fpsExpandedSize or UDim2.new(fpsExpandedSize.X.Scale, fpsExpandedSize.X.Offset, 0, 26),
+        fpsOpen and fpsExpandedSize
+            or UDim2.new(fpsExpandedSize.X.Scale, fpsExpandedSize.X.Offset, 0, 26),
         Enum.EasingDirection.Out,
         Enum.EasingStyle.Quad,
         0.2,
