@@ -179,7 +179,7 @@ toggleBtn.MouseButton1Click:Connect(function()
     gfxOpen = not gfxOpen
     toggleBtn.Text = gfxOpen and "▼" or "▶"
 
-    gfxFrame:TweenSize(
+    gfxFrame: TweenSize(
         gfxOpen and gfxExpandedSize
             or UDim2.new(gfxExpandedSize.X.Scale, gfxExpandedSize.X.Offset, 0, 26),
         Enum.EasingDirection.Out,
@@ -240,7 +240,7 @@ toggleBtn2.MouseButton1Click:Connect(function()
     fpsOpen = not fpsOpen
     toggleBtn2.Text = fpsOpen and "▼" or "▶"
 
-    fpsFrame:TweenSize(
+    fpsFrame: TweenSize(
         fpsOpen and fpsExpandedSize
             or UDim2.new(fpsExpandedSize.X.Scale, fpsExpandedSize.X.Offset, 0, 26),
         Enum.EasingDirection.Out,
