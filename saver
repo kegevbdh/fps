@@ -1,4 +1,4 @@
--- Performance + FPS Control Panel (Side by Side, All Options Visible)
+-- Side-by-Side Performance + FPS Control Panel
 -- Run via executor
 
 local Players = game:GetService("Players")
@@ -15,11 +15,13 @@ if not gui then
     gui.Parent = player:WaitForChild("PlayerGui")
 end
 
--- Graphics Preset Panel
+--------------------------------------------------
+-- Graphics Preset Panel (LEFT)
+--------------------------------------------------
 local gfxFrame = Instance.new("Frame")
 gfxFrame.Name = "GraphicsFrame"
-gfxFrame.Size = UDim2.new(0, 120, 0, 80)
-gfxFrame.Position = UDim2.new(1, -260, 0, 10) -- left side
+gfxFrame.Size = UDim2.new(0, 120, 0, 100)
+gfxFrame.Position = UDim2.new(1, -260, 0, 10) -- push left
 gfxFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
 gfxFrame.Parent = gui
 
@@ -87,11 +89,13 @@ for i,v in ipairs(gfxOptions) do
     end)
 end
 
--- FPS Cap Panel
+--------------------------------------------------
+-- FPS Cap Panel (RIGHT)
+--------------------------------------------------
 local fpsFrame = Instance.new("Frame")
 fpsFrame.Name = "FPSFrame"
 fpsFrame.Size = UDim2.new(0, 120, 0, 140)
-fpsFrame.Position = UDim2.new(1, -130, 0, 10) -- right side
+fpsFrame.Position = UDim2.new(1, -130, 0, 10) -- push right
 fpsFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
 fpsFrame.Parent = gui
 
@@ -129,5 +133,4 @@ for i,v in ipairs(fpsValues) do
         else
             fpsLabel.Text = "FPS Cap: No API"
         end
-    end)
-end
+   
