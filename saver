@@ -1,40 +1,129 @@
 --// SERVICES
 local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
 local Lighting = game:GetService("Lighting")
 local player = Players.LocalPlayer
 
---// GUI SETUP (PlayerList-friendly)
+--------------------------------------------------
+-- GUI SETUP
+--------------------------------------------------
 local gui = Instance.new("ScreenGui")
 gui.Name = "FPSGraphicsGui"
 gui.ResetOnSpawn = false
-gui.DisplayOrder = 1
-gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 gui.IgnoreGuiInset = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
 local panel = Instance.new("Frame")
-panel.Size = UDim2.new(0, 270, 0, 190)
-panel.AnchorPoint = Vector2.new(1, 0)
-panel.Position = UDim2.new(1, -10, 0, 60) -- where PlayerList starts
+panel.Size = UDim2.new(0, 270, 0, 215)
+panel.Position = UDim2.new(1, -290, 0, 80)
 panel.BackgroundColor3 = Color3.fromRGB(15,15,15)
 panel.BorderSizePixel = 0
-panel.ZIndex = 1
 panel.Parent = gui
 
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 8)
-corner.Parent = panel
+local panelCorner = Instance.new("UICorner")
+panelCorner.CornerRadius = UDim.new(0, 8)
+panelCorner.Parent = panel
 
 --------------------------------------------------
--- LEFT: Graphics Presets
+-- TOP BAR (DRAG + DROPDOWN)
+--------------------------------------------------
+local topBar = Instance.new("Frame")
+topBar.Size = UDim2.new(1, 0, 0, 26)
+topBar.BackgroundColor3 = Color3.fromRGB(25,25,25)
+topBar.BorderSizePixel = 0
+topBar.Parent = panel
+
+local topCorner = Instance.new("UICorner")
+topCorner.CornerRadius = UDim.new(0, 8)
+topCorner.Parent = topBar
+
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, -30, 1, 0)
+title.Position = UDim2.new(0, 8, 0, 0)
+title.BackgroundTransparency = 1
+title.Text = "FPS / Graphics"
+title.TextColor3 = Color3.fromRGB(255,255,255)
+title.Font = Enum.Font.SourceSansBold
+title.TextSize = 15
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Parent = topBar
+
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Size = UDim2.new(0, 24, 0, 24)
+toggleBtn.Position = UDim2.new(1, -26, 0, 1)
+toggleBtn.BackgroundTransparency = 1
+toggleBtn.Text = "–"
+toggleBtn.TextColor3 = Color3.fromRGB(255,255,255)
+toggleBtn.Font = Enum.Font.SourceSansBold
+toggleBtn.TextSize = 20
+toggleBtn.Parent = topBar
+
+--------------------------------------------------
+-- CONTENT HOLDER
+--------------------------------------------------
+local content = Instance.new("Frame")
+content.Position = UDim2.new(0, 0, 0, 26)
+content.Size = UDim2.new(1, 0, 1, -26)
+content.BackgroundTransparency = 1
+content.Parent = panel
+
+--------------------------------------------------
+-- DRAG LOGIC
+--------------------------------------------------
+local dragging, dragStart, startPos
+
+topBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = panel.Position
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - dragStart
+        panel.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+--------------------------------------------------
+-- DROPDOWN LOGIC
+--------------------------------------------------
+local open = true
+local fullSize = panel.Size
+
+toggleBtn.MouseButton1Click:Connect(function()
+    open = not open
+    if open then
+        toggleBtn.Text = "–"
+        panel:TweenSize(fullSize, "Out", "Quad", 0.2, true)
+    else
+        toggleBtn.Text = "+"
+        panel:TweenSize(UDim2.new(fullSize.X.Scale, fullSize.X.Offset, 0, 26), "Out", "Quad", 0.2, true)
+    end
+end)
+
+--------------------------------------------------
+-- LEFT: GRAPHICS PRESETS
 --------------------------------------------------
 local gfxFrame = Instance.new("Frame")
 gfxFrame.Size = UDim2.new(0, 125, 0, 180)
 gfxFrame.Position = UDim2.new(0, 5, 0, 5)
 gfxFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
 gfxFrame.BorderSizePixel = 0
-gfxFrame.ZIndex = 1
-gfxFrame.Parent = panel
+gfxFrame.Parent = content
 
 local gfxCorner = Instance.new("UICorner")
 gfxCorner.CornerRadius = UDim.new(0, 6)
@@ -43,21 +132,19 @@ gfxCorner.Parent = gfxFrame
 local gfxHeader = Instance.new("TextLabel")
 gfxHeader.Size = UDim2.new(1, 0, 0, 22)
 gfxHeader.BackgroundTransparency = 1
-gfxHeader.TextColor3 = Color3.fromRGB(255,255,255)
 gfxHeader.Text = "Graphics Presets"
+gfxHeader.TextColor3 = Color3.fromRGB(255,255,255)
 gfxHeader.Font = Enum.Font.SourceSansBold
 gfxHeader.TextSize = 16
-gfxHeader.ZIndex = 1
 gfxHeader.Parent = gfxFrame
 
 local presetsScroll = Instance.new("ScrollingFrame")
 presetsScroll.Size = UDim2.new(1, -6, 1, -26)
 presetsScroll.Position = UDim2.new(0, 3, 0, 24)
-presetsScroll.BackgroundTransparency = 1
 presetsScroll.ScrollBarThickness = 6
-presetsScroll.CanvasSize = UDim2.new(0,0,0,0)
 presetsScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-presetsScroll.ZIndex = 1
+presetsScroll.CanvasSize = UDim2.new(0,0,0,0)
+presetsScroll.BackgroundTransparency = 1
 presetsScroll.Parent = gfxFrame
 
 local listLayout = Instance.new("UIListLayout")
@@ -65,7 +152,7 @@ listLayout.Padding = UDim.new(0, 4)
 listLayout.Parent = presetsScroll
 
 --------------------------------------------------
--- BACKEND: Cache originals
+-- BACKEND CACHE
 --------------------------------------------------
 local originalData = {}
 
@@ -115,34 +202,26 @@ local function applyPreset(p)
 
     if p == "PostEffectsOff" or p == "ExtraLow" or p == "UltraLow" then
         for _, e in ipairs(Lighting:GetChildren()) do
-            if e:IsA("PostEffect") then
-                e.Enabled = false
-            end
+            if e:IsA("PostEffect") then e.Enabled = false end
         end
     end
 
     if p == "ShadowsOff" or p == "ExtraLow" or p == "UltraLow" then
         Lighting.GlobalShadows = false
         for _, part in ipairs(workspace:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.CastShadow = false
-            end
+            if part:IsA("BasePart") then part.CastShadow = false end
         end
     end
 
     if p == "DecalsOff" or p == "TexturesOff" or p == "ExtraLow" or p == "UltraLow" then
         for _, d in ipairs(workspace:GetDescendants()) do
-            if d:IsA("Decal") or d:IsA("Texture") then
-                d.Transparency = 1
-            end
+            if d:IsA("Decal") or d:IsA("Texture") then d.Transparency = 1 end
         end
     end
 
     if p == "SmoothPlastic" or p == "ExtraLow" or p == "UltraLow" then
         for _, part in ipairs(workspace:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.Material = Enum.Material.SmoothPlastic
-            end
+            if part:IsA("BasePart") then part.Material = Enum.Material.SmoothPlastic end
         end
     end
 
@@ -156,9 +235,7 @@ local function applyPreset(p)
 
     if p == "UltraLow" then
         for _, part in ipairs(workspace:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.Color = Color3.new(0,0,0)
-            end
+            if part:IsA("BasePart") then part.Color = Color3.new(0,0,0) end
         end
     end
 end
@@ -166,19 +243,10 @@ end
 --------------------------------------------------
 -- PRESET BUTTONS
 --------------------------------------------------
-local presetOptions = {
-    "Default",
-    "PostEffectsOff",
-    "ShadowsOff",
-    "DecalsOff",
-    "TexturesOff",
-    "SmoothPlastic",
-    "TerrainSimplify",
-    "ExtraLow",
-    "UltraLow"
-}
-
-for _, name in ipairs(presetOptions) do
+for _, name in ipairs({
+    "Default","PostEffectsOff","ShadowsOff","DecalsOff",
+    "TexturesOff","SmoothPlastic","TerrainSimplify","ExtraLow","UltraLow"
+}) do
     local b = Instance.new("TextButton")
     b.Size = UDim2.new(1, 0, 0, 22)
     b.BackgroundColor3 = Color3.fromRGB(40,40,40)
@@ -186,7 +254,6 @@ for _, name in ipairs(presetOptions) do
     b.Text = name
     b.Font = Enum.Font.SourceSans
     b.TextSize = 14
-    b.ZIndex = 1
     b.Parent = presetsScroll
 
     b.MouseButton1Click:Connect(function()
@@ -206,8 +273,7 @@ fpsFrame.Size = UDim2.new(0, 125, 0, 180)
 fpsFrame.Position = UDim2.new(0, 140, 0, 5)
 fpsFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
 fpsFrame.BorderSizePixel = 0
-fpsFrame.ZIndex = 1
-fpsFrame.Parent = panel
+fpsFrame.Parent = content
 
 local fpsCorner = Instance.new("UICorner")
 fpsCorner.CornerRadius = UDim.new(0, 6)
@@ -216,18 +282,16 @@ fpsCorner.Parent = fpsFrame
 local fpsHeader = Instance.new("TextLabel")
 fpsHeader.Size = UDim2.new(1, 0, 0, 22)
 fpsHeader.BackgroundTransparency = 1
-fpsHeader.TextColor3 = Color3.fromRGB(255,255,255)
 fpsHeader.Text = "FPS Cap"
+fpsHeader.TextColor3 = Color3.fromRGB(255,255,255)
 fpsHeader.Font = Enum.Font.SourceSansBold
 fpsHeader.TextSize = 16
-fpsHeader.ZIndex = 1
 fpsHeader.Parent = fpsFrame
 
 local fpsList = Instance.new("Frame")
 fpsList.Size = UDim2.new(1, -6, 1, -26)
 fpsList.Position = UDim2.new(0, 3, 0, 24)
 fpsList.BackgroundTransparency = 1
-fpsList.ZIndex = 1
 fpsList.Parent = fpsFrame
 
 local fpsLayout = Instance.new("UIListLayout")
@@ -257,7 +321,6 @@ for _, v in ipairs({20,25,30,40,50,60,"Unlimited"}) do
     btn.Text = tostring(v)
     btn.Font = Enum.Font.SourceSans
     btn.TextSize = 14
-    btn.ZIndex = 1
     btn.Parent = fpsList
     table.insert(fpsButtons, btn)
 
