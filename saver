@@ -1,5 +1,5 @@
 --------------------------------------------------
--- SINGLE PANEL: Graphics + FPS (scrollable, draggable, collapsible)
+-- SINGLE PANEL: Graphics + FPS
 --------------------------------------------------
 local UserInputService = game:GetService("UserInputService")
 local Lighting = game:GetService("Lighting")
@@ -10,7 +10,7 @@ panel.Name = "SettingsPanel"
 panel.Size = UDim2.new(0, 270, 0, 180)
 panel.Position = UDim2.new(0, 0, 0, 0)
 panel.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-panel.Parent = game.CoreGui -- or your desired parent
+panel.Parent = game.CoreGui -- or your preferred parent
 
 --------------------------------------------------
 -- LEFT: Graphics Presets
@@ -73,7 +73,7 @@ toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 toggleBtn.Text = "▼"
 toggleBtn.Font = Enum.Font.SourceSansBold
 toggleBtn.TextSize = 16
-toggleBtn.Parent = gfxTopBar -- attach to left header, could also attach to panel
+toggleBtn.Parent = gfxTopBar -- attach to left header
 
 --------------------------------------------------
 -- SCROLLING FRAMES
@@ -144,6 +144,7 @@ end
 do
     local open = true
     local expandedSize = panel.Size
+    local collapsedHeight = 22 -- top bar height only
 
     toggleBtn.MouseButton1Click:Connect(function()
         open = not open
@@ -153,7 +154,7 @@ do
         else
             toggleBtn.Text = "▶"
             panel:TweenSize(
-                UDim2.new(expandedSize.X.Scale, expandedSize.X.Offset, 0, 22),
+                UDim2.new(expandedSize.X.Scale, expandedSize.X.Offset, 0, collapsedHeight),
                 Enum.EasingDirection.Out,
                 Enum.EasingStyle.Quad,
                 0.2,
@@ -170,11 +171,7 @@ local originalData = {}
 
 local function cacheObject(obj)
     if obj:IsA("BasePart") then
-        originalData[obj] = {
-            Material = obj.Material,
-            Color = obj.Color,
-            CastShadow = obj.CastShadow
-        }
+        originalData[obj] = {Material = obj.Material, Color = obj.Color, CastShadow = obj.CastShadow}
     elseif obj:IsA("Decal") or obj:IsA("Texture") then
         originalData[obj] = {Transparency = obj.Transparency}
     end
@@ -183,7 +180,6 @@ end
 for _, obj in pairs(workspace:GetDescendants()) do
     cacheObject(obj)
 end
-
 workspace.DescendantAdded:Connect(cacheObject)
 
 local function restoreDefaults()
