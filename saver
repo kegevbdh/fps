@@ -1,0 +1,156 @@
+-- Performance + FPS Control Panel (Executor Safe, Persistent)
+-- Run via executor
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local Lighting = game:GetService("Lighting")
+
+-- Persistent GUI
+local gui = player:WaitForChild("PlayerGui"):FindFirstChild("PerfPanel")
+if not gui then
+    gui = Instance.new("ScreenGui")
+    gui.Name = "PerfPanel"
+    gui.ResetOnSpawn = false
+    gui.IgnoreGuiInset = true
+    gui.Parent = player:WaitForChild("PlayerGui")
+end
+
+-- Helper to make buttons
+local function makeButton(name, yPos, text)
+    local btn = Instance.new("TextButton")
+    btn.Name = name
+    btn.Size = UDim2.new(0, 120, 0, 25)
+    btn.Position = UDim2.new(1, -130, 0, yPos)
+    btn.BackgroundColor3 = Color3.fromRGB(30,30,30)
+    btn.TextColor3 = Color3.fromRGB(255,255,255)
+    btn.Text = text
+    btn.Parent = gui
+    return btn
+end
+
+--------------------------------------------------
+-- Graphics Preset Dropdown
+--------------------------------------------------
+local gfxBtn = makeButton("GraphicsPresetButton", 10, "Preset: Default")
+local gfxDrop = Instance.new("Frame")
+gfxDrop.Size = UDim2.new(0, 120, 0, 60)
+gfxDrop.Position = UDim2.new(1, -130, 0, 35)
+gfxDrop.BackgroundColor3 = Color3.fromRGB(20,20,20)
+gfxDrop.Visible = false
+gfxDrop.Parent = gui
+
+local function applyPreset(level)
+    if level == "Default" then
+        gfxBtn.Text = "Preset: Default"
+        gfxBtn.BackgroundColor3 = Color3.fromRGB(30,30,30)
+
+    elseif level == "ExtraLow" then
+        for _, effect in pairs(Lighting:GetChildren()) do
+            if effect:IsA("PostEffect") then effect.Enabled = false end
+        end
+        Lighting.GlobalShadows = false
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if obj:IsA("BasePart") then
+                obj.Material = Enum.Material.SmoothPlastic
+                obj.CastShadow = false
+            elseif obj:IsA("Decal") or obj:IsA("Texture") then
+                obj.Transparency = 1
+            end
+        end
+        workspace.Terrain.WaterWaveSize = 0
+        workspace.Terrain.WaterWaveSpeed = 0
+        workspace.Terrain.WaterReflectance = 0
+        workspace.Terrain.WaterTransparency = 1
+        gfxBtn.Text = "Preset: ExtraLow"
+        gfxBtn.BackgroundColor3 = Color3.fromRGB(100,0,0)
+
+    elseif level == "UltraLow" then
+        for _, effect in pairs(Lighting:GetChildren()) do
+            if effect:IsA("PostEffect") then effect.Enabled = false end
+        end
+        Lighting.GlobalShadows = false
+        for _, obj in pairs(workspace:GetDescendants()) do
+            if obj:IsA("BasePart") then
+                obj.Material = Enum.Material.SmoothPlastic
+                obj.CastShadow = false
+                obj.Color = Color3.new(0,0,0)
+            elseif obj:IsA("Decal") or obj:IsA("Texture") then
+                obj.Transparency = 1
+            end
+        end
+        workspace.Terrain.WaterWaveSize = 0
+        workspace.Terrain.WaterWaveSpeed = 0
+        workspace.Terrain.WaterReflectance = 0
+        workspace.Terrain.WaterTransparency = 1
+        gfxBtn.Text = "Preset: UltraLow"
+        gfxBtn.BackgroundColor3 = Color3.fromRGB(0,0,0)
+    end
+end
+
+local gfxOptions = {"Default","ExtraLow","UltraLow"}
+for i,v in ipairs(gfxOptions) do
+    local opt = Instance.new("TextButton")
+    opt.Size = UDim2.new(1,0,0,20)
+    opt.Position = UDim2.new(0,0,0,(i-1)*20)
+    opt.BackgroundColor3 = Color3.fromRGB(40,40,40)
+    opt.TextColor3 = Color3.fromRGB(255,255,255)
+    opt.Text = v
+    opt.Parent = gfxDrop
+    opt.MouseButton1Click:Connect(function()
+        applyPreset(v)
+        gfxDrop.Visible = false
+    end)
+end
+
+gfxBtn.MouseButton1Click:Connect(function()
+    gfxDrop.Visible = not gfxDrop.Visible
+end)
+
+--------------------------------------------------
+-- FPS Cap Dropdown
+--------------------------------------------------
+local fpsBtn = makeButton("FPSButton", 70, "FPS: Unlimited")
+local fpsDrop = Instance.new("Frame")
+fpsDrop.Size = UDim2.new(0, 120, 0, 120)
+fpsDrop.Position = UDim2.new(1, -130, 0, 95)
+fpsDrop.BackgroundColor3 = Color3.fromRGB(20,20,20)
+fpsDrop.Visible = false
+fpsDrop.Parent = gui
+
+local function findCapper()
+    local g = getgenv and getgenv() or {}
+    return g.setfpscap or _G.setfpscap or setfpscap or (syn and (syn.set_fps or syn.setfpscap))
+end
+local cap = findCapper()
+
+local fpsValues = {20,30,40,50,60,"Unlimited"}
+for i,v in ipairs(fpsValues) do
+    local opt = Instance.new("TextButton")
+    opt.Size = UDim2.new(1,0,0,20)
+    opt.Position = UDim2.new(0,0,0,(i-1)*20)
+    opt.BackgroundColor3 = Color3.fromRGB(40,40,40)
+    opt.TextColor3 = Color3.fromRGB(255,255,255)
+    opt.Text = tostring(v)
+    opt.Parent = fpsDrop
+    opt.MouseButton1Click:Connect(function()
+        if cap then
+            if v == "Unlimited" then
+                cap(1000)
+                fpsBtn.Text = "FPS: Unlimited"
+                fpsBtn.BackgroundColor3 = Color3.fromRGB(30,30,30)
+            else
+                cap(v)
+                fpsBtn.Text = "FPS: "..v
+                fpsBtn.BackgroundColor3 = Color3.fromRGB(0,100,0)
+            end
+        else
+            fpsBtn.Text = "No API"
+            fpsBtn.BackgroundColor3 = Color3.fromRGB(100,0,0)
+        end
+        fpsDrop.Visible = false
+    end)
+end
+
+fpsBtn.MouseButton1Click:Connect(function()
+    fpsDrop.Visible = not fpsDrop.Visible
+end)
