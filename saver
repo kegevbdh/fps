@@ -1,66 +1,42 @@
--- Side-by-Side Performance Panel (Scrollable Presets + Full FPS Options)
--- Run via executor
+-- Cache originals once
+local originalData = {}
 
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-local Lighting = game:GetService("Lighting")
-
--- Persistent GUI
-local gui = player:WaitForChild("PlayerGui"):FindFirstChild("PerfPanel")
-if not gui then
-    gui = Instance.new("ScreenGui")
-    gui.Name = "PerfPanel"
-    gui.ResetOnSpawn = false
-    gui.IgnoreGuiInset = true
-    gui.Parent = player:WaitForChild("PlayerGui")
+local function cacheOriginals()
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj:IsA("BasePart") then
+            originalData[obj] = {
+                Material = obj.Material,
+                Color = obj.Color,
+                CastShadow = obj.CastShadow
+            }
+        elseif obj:IsA("Decal") or obj:IsA("Texture") then
+            originalData[obj] = {
+                Transparency = obj.Transparency
+            }
+        end
+    end
 end
 
--- Container anchored top-right to guarantee side-by-side layout
-local panel = gui:FindFirstChild("PerfContainer")
-if not panel then
-    panel = Instance.new("Frame")
-    panel.Name = "PerfContainer"
-    panel.Size = UDim2.new(0, 260, 0, 170) -- width for two columns
-    panel.Position = UDim2.new(1, -270, 0, 10) -- 10px from top-right
-    panel.BackgroundTransparency = 1
-    panel.Parent = gui
+-- Call once at startup
+cacheOriginals()
+
+-- Restore function
+local function restoreDefaults()
+    for obj, data in pairs(originalData) do
+        if obj:IsA("BasePart") then
+            obj.Material = data.Material
+            obj.Color = data.Color
+            obj.CastShadow = data.CastShadow
+        elseif obj:IsA("Decal") or obj:IsA("Texture") then
+            obj.Transparency = data.Transparency
+        end
+    end
 end
 
--- LEFT: Graphics Presets (scrollable)
-local gfxFrame = Instance.new("Frame")
-gfxFrame.Name = "GraphicsFrame"
-gfxFrame.Size = UDim2.new(0, 125, 0, 170)
-gfxFrame.Position = UDim2.new(0, 0, 0, 0)
-gfxFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
-gfxFrame.Parent = panel
-
-local gfxHeader = Instance.new("TextLabel")
-gfxHeader.Size = UDim2.new(1, 0, 0, 22)
-gfxHeader.BackgroundTransparency = 1
-gfxHeader.TextColor3 = Color3.fromRGB(255,255,255)
-gfxHeader.Text = "Graphics Presets"
-gfxHeader.Font = Enum.Font.SourceSansBold
-gfxHeader.TextSize = 16
-gfxHeader.Parent = gfxFrame
-
-local presetsScroll = Instance.new("ScrollingFrame")
-presetsScroll.Name = "PresetsScroll"
-presetsScroll.Size = UDim2.new(1, -6, 1, -26)
-presetsScroll.Position = UDim2.new(0, 3, 0, 24)
-presetsScroll.BackgroundTransparency = 1
-presetsScroll.ScrollBarThickness = 6
-presetsScroll.CanvasSize = UDim2.new(0,0,0,0)
-presetsScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-presetsScroll.Parent = gfxFrame
-
-local listLayout = Instance.new("UIListLayout")
-listLayout.Parent = presetsScroll
-listLayout.Padding = UDim.new(0, 4)
-
--- Preset actions (respect Roblox slider; only lower beyond built-in)
+-- Modify your preset handler
 local function applyPreset(p)
     if p == "Default" then
-        -- No overrides; Roblox settings take full precedence
+        restoreDefaults()
         return
     end
 
@@ -101,93 +77,4 @@ local function applyPreset(p)
             if part:IsA("BasePart") then part.Color = Color3.new(0,0,0) end
         end
     end
-end
-
--- Full preset list (all visible, scroll if overflow)
-local presetOptions = {
-    "Default",          -- respect Roblox quality
-    "PostEffectsOff",   -- disable Bloom/DOF/SunRays/etc.
-    "ShadowsOff",       -- disable global + per-part shadows
-    "DecalsOff",        -- hide decals
-    "TexturesOff",      -- hide textures
-    "SmoothPlastic",    -- force lightest material
-    "TerrainSimplify",  -- kill water detail
-    "ExtraLow",         -- bundle: effects+shadows+textures
-    "UltraLow"          -- bundle: + force black parts
-}
-
-for _, name in ipairs(presetOptions) do
-    local b = Instance.new("TextButton")
-    b.Size = UDim2.new(1, 0, 0, 22)
-    b.BackgroundColor3 = Color3.fromRGB(40,40,40)
-    b.TextColor3 = Color3.fromRGB(255,255,255)
-    b.Text = name
-    b.Parent = presetsScroll
-    b.MouseButton1Click:Connect(function()
-        applyPreset(name)
-        b.BackgroundColor3 = Color3.fromRGB(0,100,0)
-        task.delay(0.2, function() b.BackgroundColor3 = Color3.fromRGB(40,40,40) end)
-    end)
-end
-
--- RIGHT: FPS caps (all options visible)
-local fpsFrame = Instance.new("Frame")
-fpsFrame.Name = "FPSFrame"
-fpsFrame.Size = UDim2.new(0, 125, 0, 170)
-fpsFrame.Position = UDim2.new(0, 135, 0, 0) -- to the right of gfxFrame inside container
-fpsFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
-fpsFrame.Parent = panel
-
-local fpsHeader = Instance.new("TextLabel")
-fpsHeader.Size = UDim2.new(1, 0, 0, 22)
-fpsHeader.BackgroundTransparency = 1
-fpsHeader.TextColor3 = Color3.fromRGB(255,255,255)
-fpsHeader.Text = "FPS Cap"
-fpsHeader.Font = Enum.Font.SourceSansBold
-fpsHeader.TextSize = 16
-fpsHeader.Parent = fpsFrame
-
-local fpsList = Instance.new("Frame")
-fpsList.Size = UDim2.new(1, -6, 1, -26)
-fpsList.Position = UDim2.new(0, 3, 0, 24)
-fpsList.BackgroundTransparency = 1
-fpsList.Parent = fpsFrame
-
-local fpsLayout = Instance.new("UIListLayout")
-fpsLayout.Parent = fpsList
-fpsLayout.Padding = UDim.new(0, 4)
-
-local function findCapper()
-    local g = getgenv and getgenv() or {}
-    return g.setfpscap or _G.setfpscap or setfpscap or (syn and (syn.set_fps or syn.setfpscap))
-end
-local cap = findCapper()
-
-local fpsValues = {20,25,30,35,40,45,50,55,60,"Unlimited"}
-for _, v in ipairs(fpsValues) do
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 22)
-    btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
-    btn.TextColor3 = Color3.fromRGB(255,255,255)
-    btn.Text = tostring(v)
-    btn.Parent = fpsList
-
-    btn.MouseButton1Click:Connect(function()
-        if cap then
-            if v == "Unlimited" then
-                cap(1000)
-                btn.Text = "Unlimited ✓"
-            else
-                cap(v)
-                btn.Text = tostring(v).." ✓"
-            end
-        else
-            btn.Text = tostring(v).." (No API)"
-            btn.BackgroundColor3 = Color3.fromRGB(100,0,0)
-            task.delay(0.6, function()
-                btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
-                btn.Text = tostring(v)
-            end)
-        end
-    end)
 end
