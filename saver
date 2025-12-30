@@ -1,26 +1,60 @@
--- Cache originals once
+-- Side-by-Side Performance Panel (Restorable Presets + FPS Highlight)
+-- Run via executor
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local Lighting = game:GetService("Lighting")
+
+-- Persistent GUI
+local gui = player:WaitForChild("PlayerGui"):FindFirstChild("PerfPanel")
+if not gui then
+    gui = Instance.new("ScreenGui")
+    gui.Name = "PerfPanel"
+    gui.ResetOnSpawn = false
+    gui.IgnoreGuiInset = true
+    gui.Parent = player:WaitForChild("PlayerGui")
+end
+
+-- Container anchored top-right to guarantee side-by-side layout
+local panel = gui:FindFirstChild("PerfContainer")
+if not panel then
+    panel = Instance.new("Frame")
+    panel.Name = "PerfContainer"
+    panel.Size = UDim2.new(0, 260, 0, 180) -- width for two columns
+    panel.Position = UDim2.new(1, -270, 0, 10) -- 10px from top-right
+    panel.BackgroundTransparency = 1
+    panel.Parent = gui
+end
+
+--------------------------------------------------
+-- Backend: cache originals (with auto-refresh)
+--------------------------------------------------
 local originalData = {}
 
-local function cacheOriginals()
-    for _, obj in pairs(workspace:GetDescendants()) do
-        if obj:IsA("BasePart") then
-            originalData[obj] = {
-                Material = obj.Material,
-                Color = obj.Color,
-                CastShadow = obj.CastShadow
-            }
-        elseif obj:IsA("Decal") or obj:IsA("Texture") then
-            originalData[obj] = {
-                Transparency = obj.Transparency
-            }
-        end
+local function cacheObject(obj)
+    if obj:IsA("BasePart") then
+        originalData[obj] = {
+            Material = obj.Material,
+            Color = obj.Color,
+            CastShadow = obj.CastShadow
+        }
+    elseif obj:IsA("Decal") or obj:IsA("Texture") then
+        originalData[obj] = {
+            Transparency = obj.Transparency
+        }
     end
 end
 
--- Call once at startup
-cacheOriginals()
+-- Initial cache
+for _, obj in pairs(workspace:GetDescendants()) do
+    cacheObject(obj)
+end
 
--- Restore function
+-- Auto-cache new objects
+workspace.DescendantAdded:Connect(function(obj)
+    cacheObject(obj)
+end)
+
 local function restoreDefaults()
     for obj, data in pairs(originalData) do
         if obj:IsA("BasePart") then
@@ -33,7 +67,40 @@ local function restoreDefaults()
     end
 end
 
--- Modify your preset handler
+--------------------------------------------------
+-- LEFT: Graphics Presets (scrollable)
+--------------------------------------------------
+local gfxFrame = Instance.new("Frame")
+gfxFrame.Name = "GraphicsFrame"
+gfxFrame.Size = UDim2.new(0, 125, 0, 180)
+gfxFrame.Position = UDim2.new(0, 0, 0, 0)
+gfxFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
+gfxFrame.Parent = panel
+
+local gfxHeader = Instance.new("TextLabel")
+gfxHeader.Size = UDim2.new(1, 0, 0, 22)
+gfxHeader.BackgroundTransparency = 1
+gfxHeader.TextColor3 = Color3.fromRGB(255,255,255)
+gfxHeader.Text = "Graphics Presets"
+gfxHeader.Font = Enum.Font.SourceSansBold
+gfxHeader.TextSize = 16
+gfxHeader.Parent = gfxFrame
+
+local presetsScroll = Instance.new("ScrollingFrame")
+presetsScroll.Name = "PresetsScroll"
+presetsScroll.Size = UDim2.new(1, -6, 1, -26)
+presetsScroll.Position = UDim2.new(0, 3, 0, 24)
+presetsScroll.BackgroundTransparency = 1
+presetsScroll.ScrollBarThickness = 6
+presetsScroll.CanvasSize = UDim2.new(0,0,0,0)
+presetsScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+presetsScroll.Parent = gfxFrame
+
+local listLayout = Instance.new("UIListLayout")
+listLayout.Parent = presetsScroll
+listLayout.Padding = UDim.new(0, 4)
+
+-- Preset actions
 local function applyPreset(p)
     if p == "Default" then
         restoreDefaults()
@@ -78,3 +145,78 @@ local function applyPreset(p)
         end
     end
 end
+
+-- Full preset list
+local presetOptions = {
+    "Default",
+    "PostEffectsOff",
+    "ShadowsOff",
+    "DecalsOff",
+    "TexturesOff",
+    "SmoothPlastic",
+    "TerrainSimplify",
+    "ExtraLow",
+    "UltraLow"
+}
+
+for _, name in ipairs(presetOptions) do
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(1, 0, 0, 22)
+    b.BackgroundColor3 = Color3.fromRGB(40,40,40)
+    b.TextColor3 = Color3.fromRGB(255,255,255)
+    b.Text = name
+    b.Parent = presetsScroll
+    b.MouseButton1Click:Connect(function()
+        applyPreset(name)
+        b.BackgroundColor3 = Color3.fromRGB(0,100,0)
+        task.delay(0.2, function() b.BackgroundColor3 = Color3.fromRGB(40,40,40) end)
+    end)
+end
+
+--------------------------------------------------
+-- RIGHT: FPS caps (exclusive highlight)
+--------------------------------------------------
+local fpsFrame = Instance.new("Frame")
+fpsFrame.Name = "FPSFrame"
+fpsFrame.Size = UDim2.new(0, 125, 0, 180)
+fpsFrame.Position = UDim2.new(0, 135, 0, 0)
+fpsFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
+fpsFrame.Parent = panel
+
+local fpsHeader = Instance.new("TextLabel")
+fpsHeader.Size = UDim2.new(1, 0, 0, 22)
+fpsHeader.BackgroundTransparency = 1
+fpsHeader.TextColor3 = Color3.fromRGB(255,255,255)
+fpsHeader.Text = "FPS Cap"
+fpsHeader.Font = Enum.Font.SourceSansBold
+fpsHeader.TextSize = 16
+fpsHeader.Parent = fpsFrame
+
+local fpsList = Instance.new("Frame")
+fpsList.Size = UDim2.new(1, -6, 1, -26)
+fpsList.Position = UDim2.new(0, 3, 0, 24)
+fpsList.BackgroundTransparency = 1
+fpsList.Parent = fpsFrame
+
+local fpsLayout = Instance.new("UIListLayout")
+fpsLayout.Parent = fpsList
+fpsLayout.Padding = UDim.new(0, 4)
+
+local function findCapper()
+    local g = getgenv and getgenv() or {}
+    return g.setfpscap or _G.setfpscap or setfpscap or (syn and (syn.set_fps or syn.setfpscap))
+end
+local cap = findCapper()
+
+local fpsButtons = {}
+local function setFPSHighlight(selectedBtn)
+    for _, btn in ipairs(fpsButtons) do
+        btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+    end
+    selectedBtn.BackgroundColor3 = Color3.fromRGB(0,100,0)
+end
+
+local fpsValues = {20,25,30,35,40,45,50,55,60,"Unlimited"}
+for _, v in ipairs(fpsValues) do
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0,
