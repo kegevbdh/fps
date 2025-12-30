@@ -2,7 +2,6 @@
 -- LEFT: Graphics Presets (scrollable, restorable, draggable, collapsible)
 --------------------------------------------------
 local UserInputService = game:GetService("UserInputService")
-local Lighting = game:GetService("Lighting")
 
 local gfxFrame = Instance.new("Frame")
 gfxFrame.Name = "GraphicsFrame"
@@ -20,6 +19,7 @@ topBar.Parent = gfxFrame
 
 local gfxHeader = Instance.new("TextLabel")
 gfxHeader.Size = UDim2.new(1, -22, 1, 0)
+gfxHeader.Position = UDim2.new(0, 0, 0, 0)
 gfxHeader.BackgroundTransparency = 1
 gfxHeader.TextColor3 = Color3.fromRGB(255,255,255)
 gfxHeader.Text = "Graphics Presets"
@@ -163,66 +163,102 @@ for _, name in ipairs(presetOptions) do
     b.MouseButton1Click:Connect(function()
         applyPreset(name)
         b.BackgroundColor3 = Color3.fromRGB(0,100,0)
-        task.delay(0.2, function()
-            b.BackgroundColor3 = Color3.fromRGB(40,40,40)
-        end)
+        task.delay(0.2, function() b.BackgroundColor3 = Color3.fromRGB(40,40,40) end)
     end)
 end
 
 --------------------------------------------------
--- DROPDOWN TOGGLE (FIXED - GRAPHICS)
+-- PANEL DRAGGING
 --------------------------------------------------
-local gfxOpen = true
-local gfxExpandedSize = gfxFrame.Size
+local dragging, dragStart, startPos
 
-toggleBtn.MouseButton1Click:Connect(function()
-    gfxOpen = not gfxOpen
-    toggleBtn.Text = gfxOpen and "▼" or "▶"
+topBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = panel.Position
+    end
+end)
 
-    gfxFrame: TweenSize(
-        gfxOpen and gfxExpandedSize
-            or UDim2.new(gfxExpandedSize.X.Scale, gfxExpandedSize.X.Offset, 0, 26),
-        Enum.EasingDirection.Out,
-        Enum.EasingStyle.Quad,
-        0.2,
-        true
-    )
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - dragStart
+        panel.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
 end)
 
 --------------------------------------------------
--- RIGHT: FPS caps (exclusive highlight, collapsible)
+-- DROPDOWN TOGGLE
 --------------------------------------------------
+local open = true
+local expandedSize = panel.Size
+
+toggleBtn.MouseButton1Click:Connect(function()
+    open = not open
+    if open then
+        toggleBtn.Text = "▼"
+        panel:TweenSize(expandedSize, Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2, true)
+    else
+        toggleBtn.Text = "▶"
+        panel:TweenSize(
+            UDim2.new(expandedSize.X.Scale, expandedSize.X.Offset, 0, 26),
+            Enum.EasingDirection.Out,
+            Enum.EasingStyle.Quad,
+            0.2,
+            true
+        )
+    end
+end)
+
+--------------------------------------------------
+-- RIGHT: FPS caps (exclusive highlight, draggable, collapsible)
+--------------------------------------------------
+local UserInputService = game:GetService("UserInputService")
+
 local fpsFrame = Instance.new("Frame")
 fpsFrame.Name = "FPSFrame"
 fpsFrame.Size = UDim2.new(0, 125, 0, 180)
-fpsFrame.Position = UDim2.new(0, 135, 0, 0)
+fpsFrame.Position = UDim2.new(0, 135, 0, 0) -- side by side with presets
 fpsFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
 fpsFrame.Parent = panel
 
-local topBar2 = Instance.new("Frame")
-topBar2.Name = "TopBar"
-topBar2.Size = UDim2.new(1, 0, 0, 22)
-topBar2.BackgroundColor3 = Color3.fromRGB(30,30,30)
-topBar2.Parent = fpsFrame
+-- Top bar for dragging + toggle
+local topBar = Instance.new("Frame")
+topBar.Name = "TopBar"
+topBar.Size = UDim2.new(1, 0, 0, 22)
+topBar.BackgroundColor3 = Color3.fromRGB(30,30,30)
+topBar.Parent = fpsFrame
 
 local fpsHeader = Instance.new("TextLabel")
 fpsHeader.Size = UDim2.new(1, -22, 1, 0)
+fpsHeader.Position = UDim2.new(0, 0, 0, 0)
 fpsHeader.BackgroundTransparency = 1
 fpsHeader.TextColor3 = Color3.fromRGB(255,255,255)
 fpsHeader.Text = "FPS Cap"
 fpsHeader.Font = Enum.Font.SourceSansBold
 fpsHeader.TextSize = 16
-fpsHeader.Parent = topBar2
+fpsHeader.Parent = topBar
 
-local toggleBtn2 = Instance.new("TextButton")
-toggleBtn2.Size = UDim2.new(0, 22, 1, 0)
-toggleBtn2.Position = UDim2.new(1, -22, 0, 0)
-toggleBtn2.BackgroundColor3 = Color3.fromRGB(40,40,40)
-toggleBtn2.TextColor3 = Color3.fromRGB(255,255,255)
-toggleBtn2.Text = "▼"
-toggleBtn2.Font = Enum.Font.SourceSansBold
-toggleBtn2.TextSize = 16
-toggleBtn2.Parent = topBar2
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Size = UDim2.new(0, 22, 1, 0)
+toggleBtn.Position = UDim2.new(1, -22, 0, 0)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+toggleBtn.TextColor3 = Color3.fromRGB(255,255,255)
+toggleBtn.Text = "▼"
+toggleBtn.Font = Enum.Font.SourceSansBold
+toggleBtn.TextSize = 16
+toggleBtn.Parent = topBar
 
 local fpsList = Instance.new("Frame")
 fpsList.Size = UDim2.new(1, -6, 1, -26)
@@ -230,22 +266,104 @@ fpsList.Position = UDim2.new(0, 3, 0, 24)
 fpsList.BackgroundTransparency = 1
 fpsList.Parent = fpsFrame
 
---------------------------------------------------
--- DROPDOWN TOGGLE (FIXED - FPS)
---------------------------------------------------
-local fpsOpen = true
-local fpsExpandedSize = fpsFrame.Size
+local fpsLayout = Instance.new("UIListLayout")
+fpsLayout.Parent = fpsList
+fpsLayout.Padding = UDim.new(0, 4)
 
-toggleBtn2.MouseButton1Click:Connect(function()
-    fpsOpen = not fpsOpen
-    toggleBtn2.Text = fpsOpen and "▼" or "▶"
+local function findCapper()
+    local g = getgenv and getgenv() or {}
+    return g.setfpscap or _G.setfpscap or setfpscap or (syn and (syn.set_fps or syn.setfpscap))
+end
+local cap = findCapper()
 
-    fpsFrame: TweenSize(
-        fpsOpen and fpsExpandedSize
-            or UDim2.new(fpsExpandedSize.X.Scale, fpsExpandedSize.X.Offset, 0, 26),
-        Enum.EasingDirection.Out,
-        Enum.EasingStyle.Quad,
-        0.2,
-        true
-    )
+-- Track all FPS buttons for exclusive highlight
+local fpsButtons = {}
+local function setFPSHighlight(selectedBtn)
+    for _, btn in ipairs(fpsButtons) do
+        btn.BackgroundColor3 = Color3.fromRGB(40,40,40) -- reset all to gray
+    end
+    selectedBtn.BackgroundColor3 = Color3.fromRGB(0,100,0) -- green for active
+end
+
+local fpsValues = {20,25,30,35,40,45,50,55,60,"Unlimited"}
+for _, v in ipairs(fpsValues) do
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 0, 22)
+    btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+    btn.TextColor3 = Color3.fromRGB(255,255,255)
+    btn.Text = tostring(v)
+    btn.Parent = fpsList
+    table.insert(fpsButtons, btn)
+
+    btn.MouseButton1Click:Connect(function()
+        if cap then
+            if v == "Unlimited" then
+                cap(1000)
+            else
+                cap(v)
+            end
+            setFPSHighlight(btn)
+        else
+            btn.Text = tostring(v).." (No API)"
+            btn.BackgroundColor3 = Color3.fromRGB(100,0,0)
+            task.delay(0.6, function()
+                btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+                btn.Text = tostring(v)
+            end)
+        end
+    end)
+end
+
+--------------------------------------------------
+-- PANEL DRAGGING
+--------------------------------------------------
+local dragging, dragStart, startPos
+
+topBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = panel.Position
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - dragStart
+        panel.Position = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+--------------------------------------------------
+-- DROPDOWN TOGGLE
+--------------------------------------------------
+local open = true
+local expandedSize = panel.Size
+
+toggleBtn.MouseButton1Click:Connect(function()
+    open = not open
+    if open then
+        toggleBtn.Text = "▼"
+        panel:TweenSize(expandedSize, Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2, true)
+    else
+        toggleBtn.Text = "▶"
+        panel:TweenSize(
+            UDim2.new(expandedSize.X.Scale, expandedSize.X.Offset, 0, 26),
+            Enum.EasingDirection.Out,
+            Enum.EasingStyle.Quad,
+            0.2,
+            true
+        )
+    end
 end)
