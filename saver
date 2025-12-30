@@ -1,4 +1,4 @@
--- Side-by-Side Performance + FPS Control Panel
+-- Side-by-Side Performance Panel (Scrollable Presets + Full FPS Options)
 -- Run via executor
 
 local Players = game:GetService("Players")
@@ -15,96 +15,147 @@ if not gui then
     gui.Parent = player:WaitForChild("PlayerGui")
 end
 
---------------------------------------------------
--- Graphics Preset Panel (LEFT)
---------------------------------------------------
+-- Container anchored top-right to guarantee side-by-side layout
+local panel = gui:FindFirstChild("PerfContainer")
+if not panel then
+    panel = Instance.new("Frame")
+    panel.Name = "PerfContainer"
+    panel.Size = UDim2.new(0, 260, 0, 170) -- width for two columns
+    panel.Position = UDim2.new(1, -270, 0, 10) -- 10px from top-right
+    panel.BackgroundTransparency = 1
+    panel.Parent = gui
+end
+
+-- LEFT: Graphics Presets (scrollable)
 local gfxFrame = Instance.new("Frame")
 gfxFrame.Name = "GraphicsFrame"
-gfxFrame.Size = UDim2.new(0, 120, 0, 100)
-gfxFrame.Position = UDim2.new(1, -260, 0, 10) -- push left
+gfxFrame.Size = UDim2.new(0, 125, 0, 170)
+gfxFrame.Position = UDim2.new(0, 0, 0, 0)
 gfxFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
-gfxFrame.Parent = gui
+gfxFrame.Parent = panel
 
-local gfxLabel = Instance.new("TextLabel")
-gfxLabel.Size = UDim2.new(1,0,0,20)
-gfxLabel.BackgroundTransparency = 1
-gfxLabel.TextColor3 = Color3.fromRGB(255,255,255)
-gfxLabel.Text = "Graphics Preset"
-gfxLabel.Parent = gfxFrame
+local gfxHeader = Instance.new("TextLabel")
+gfxHeader.Size = UDim2.new(1, 0, 0, 22)
+gfxHeader.BackgroundTransparency = 1
+gfxHeader.TextColor3 = Color3.fromRGB(255,255,255)
+gfxHeader.Text = "Graphics Presets"
+gfxHeader.Font = Enum.Font.SourceSansBold
+gfxHeader.TextSize = 16
+gfxHeader.Parent = gfxFrame
 
-local function applyPreset(level)
-    if level == "Default" then
-        gfxLabel.Text = "Graphics Preset: Default"
-    elseif level == "ExtraLow" then
+local presetsScroll = Instance.new("ScrollingFrame")
+presetsScroll.Name = "PresetsScroll"
+presetsScroll.Size = UDim2.new(1, -6, 1, -26)
+presetsScroll.Position = UDim2.new(0, 3, 0, 24)
+presetsScroll.BackgroundTransparency = 1
+presetsScroll.ScrollBarThickness = 6
+presetsScroll.CanvasSize = UDim2.new(0,0,0,0)
+presetsScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+presetsScroll.Parent = gfxFrame
+
+local listLayout = Instance.new("UIListLayout")
+listLayout.Parent = presetsScroll
+listLayout.Padding = UDim.new(0, 4)
+
+-- Preset actions (respect Roblox slider; only lower beyond built-in)
+local function applyPreset(p)
+    if p == "Default" then
+        -- No overrides; Roblox settings take full precedence
+        return
+    end
+
+    if p == "PostEffectsOff" or p == "ExtraLow" or p == "UltraLow" then
         for _, effect in pairs(Lighting:GetChildren()) do
             if effect:IsA("PostEffect") then effect.Enabled = false end
         end
+    end
+
+    if p == "ShadowsOff" or p == "ExtraLow" or p == "UltraLow" then
         Lighting.GlobalShadows = false
-        for _, obj in pairs(workspace:GetDescendants()) do
-            if obj:IsA("BasePart") then
-                obj.Material = Enum.Material.SmoothPlastic
-                obj.CastShadow = false
-            elseif obj:IsA("Decal") or obj:IsA("Texture") then
-                obj.Transparency = 1
-            end
+        for _, part in pairs(workspace:GetDescendants()) do
+            if part:IsA("BasePart") then part.CastShadow = false end
         end
+    end
+
+    if p == "DecalsOff" or p == "TexturesOff" or p == "ExtraLow" or p == "UltraLow" then
+        for _, d in pairs(workspace:GetDescendants()) do
+            if d:IsA("Decal") or d:IsA("Texture") then d.Transparency = 1 end
+        end
+    end
+
+    if p == "SmoothPlastic" or p == "ExtraLow" or p == "UltraLow" then
+        for _, part in pairs(workspace:GetDescendants()) do
+            if part:IsA("BasePart") then part.Material = Enum.Material.SmoothPlastic end
+        end
+    end
+
+    if p == "TerrainSimplify" or p == "ExtraLow" or p == "UltraLow" then
         workspace.Terrain.WaterWaveSize = 0
         workspace.Terrain.WaterWaveSpeed = 0
         workspace.Terrain.WaterReflectance = 0
         workspace.Terrain.WaterTransparency = 1
-        gfxLabel.Text = "Graphics Preset: ExtraLow"
-    elseif level == "UltraLow" then
-        for _, effect in pairs(Lighting:GetChildren()) do
-            if effect:IsA("PostEffect") then effect.Enabled = false end
+    end
+
+    if p == "UltraLow" then
+        for _, part in pairs(workspace:GetDescendants()) do
+            if part:IsA("BasePart") then part.Color = Color3.new(0,0,0) end
         end
-        Lighting.GlobalShadows = false
-        for _, obj in pairs(workspace:GetDescendants()) do
-            if obj:IsA("BasePart") then
-                obj.Material = Enum.Material.SmoothPlastic
-                obj.CastShadow = false
-                obj.Color = Color3.new(0,0,0)
-            elseif obj:IsA("Decal") or obj:IsA("Texture") then
-                obj.Transparency = 1
-            end
-        end
-        workspace.Terrain.WaterWaveSize = 0
-        workspace.Terrain.WaterWaveSpeed = 0
-        workspace.Terrain.WaterReflectance = 0
-        workspace.Terrain.WaterTransparency = 1
-        gfxLabel.Text = "Graphics Preset: UltraLow"
     end
 end
 
-local gfxOptions = {"Default","ExtraLow","UltraLow"}
-for i,v in ipairs(gfxOptions) do
-    local opt = Instance.new("TextButton")
-    opt.Size = UDim2.new(1,0,0,20)
-    opt.Position = UDim2.new(0,0,0,i*20)
-    opt.BackgroundColor3 = Color3.fromRGB(40,40,40)
-    opt.TextColor3 = Color3.fromRGB(255,255,255)
-    opt.Text = v
-    opt.Parent = gfxFrame
-    opt.MouseButton1Click:Connect(function()
-        applyPreset(v)
+-- Full preset list (all visible, scroll if overflow)
+local presetOptions = {
+    "Default",          -- respect Roblox quality
+    "PostEffectsOff",   -- disable Bloom/DOF/SunRays/etc.
+    "ShadowsOff",       -- disable global + per-part shadows
+    "DecalsOff",        -- hide decals
+    "TexturesOff",      -- hide textures
+    "SmoothPlastic",    -- force lightest material
+    "TerrainSimplify",  -- kill water detail
+    "ExtraLow",         -- bundle: effects+shadows+textures
+    "UltraLow"          -- bundle: + force black parts
+}
+
+for _, name in ipairs(presetOptions) do
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(1, 0, 0, 22)
+    b.BackgroundColor3 = Color3.fromRGB(40,40,40)
+    b.TextColor3 = Color3.fromRGB(255,255,255)
+    b.Text = name
+    b.Parent = presetsScroll
+    b.MouseButton1Click:Connect(function()
+        applyPreset(name)
+        b.BackgroundColor3 = Color3.fromRGB(0,100,0)
+        task.delay(0.2, function() b.BackgroundColor3 = Color3.fromRGB(40,40,40) end)
     end)
 end
 
---------------------------------------------------
--- FPS Cap Panel (RIGHT)
---------------------------------------------------
+-- RIGHT: FPS caps (all options visible)
 local fpsFrame = Instance.new("Frame")
 fpsFrame.Name = "FPSFrame"
-fpsFrame.Size = UDim2.new(0, 120, 0, 140)
-fpsFrame.Position = UDim2.new(1, -130, 0, 10) -- push right
+fpsFrame.Size = UDim2.new(0, 125, 0, 170)
+fpsFrame.Position = UDim2.new(0, 135, 0, 0) -- to the right of gfxFrame inside container
 fpsFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
-fpsFrame.Parent = gui
+fpsFrame.Parent = panel
 
-local fpsLabel = Instance.new("TextLabel")
-fpsLabel.Size = UDim2.new(1,0,0,20)
-fpsLabel.BackgroundTransparency = 1
-fpsLabel.TextColor3 = Color3.fromRGB(255,255,255)
-fpsLabel.Text = "FPS Cap"
-fpsLabel.Parent = fpsFrame
+local fpsHeader = Instance.new("TextLabel")
+fpsHeader.Size = UDim2.new(1, 0, 0, 22)
+fpsHeader.BackgroundTransparency = 1
+fpsHeader.TextColor3 = Color3.fromRGB(255,255,255)
+fpsHeader.Text = "FPS Cap"
+fpsHeader.Font = Enum.Font.SourceSansBold
+fpsHeader.TextSize = 16
+fpsHeader.Parent = fpsFrame
+
+local fpsList = Instance.new("Frame")
+fpsList.Size = UDim2.new(1, -6, 1, -26)
+fpsList.Position = UDim2.new(0, 3, 0, 24)
+fpsList.BackgroundTransparency = 1
+fpsList.Parent = fpsFrame
+
+local fpsLayout = Instance.new("UIListLayout")
+fpsLayout.Parent = fpsList
+fpsLayout.Padding = UDim.new(0, 4)
 
 local function findCapper()
     local g = getgenv and getgenv() or {}
@@ -112,25 +163,31 @@ local function findCapper()
 end
 local cap = findCapper()
 
-local fpsValues = {20,30,40,50,60,"Unlimited"}
-for i,v in ipairs(fpsValues) do
-    local opt = Instance.new("TextButton")
-    opt.Size = UDim2.new(1,0,0,20)
-    opt.Position = UDim2.new(0,0,0,i*20)
-    opt.BackgroundColor3 = Color3.fromRGB(40,40,40)
-    opt.TextColor3 = Color3.fromRGB(255,255,255)
-    opt.Text = tostring(v)
-    opt.Parent = fpsFrame
-    opt.MouseButton1Click:Connect(function()
+local fpsValues = {20,25,30,35,40,45,50,55,60,"Unlimited"}
+for _, v in ipairs(fpsValues) do
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 0, 22)
+    btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+    btn.TextColor3 = Color3.fromRGB(255,255,255)
+    btn.Text = tostring(v)
+    btn.Parent = fpsList
+
+    btn.MouseButton1Click:Connect(function()
         if cap then
             if v == "Unlimited" then
                 cap(1000)
-                fpsLabel.Text = "FPS Cap: Unlimited"
+                btn.Text = "Unlimited ✓"
             else
                 cap(v)
-                fpsLabel.Text = "FPS Cap: "..v
+                btn.Text = tostring(v).." ✓"
             end
         else
-            fpsLabel.Text = "FPS Cap: No API"
+            btn.Text = tostring(v).." (No API)"
+            btn.BackgroundColor3 = Color3.fromRGB(100,0,0)
+            task.delay(0.6, function()
+                btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+                btn.Text = tostring(v)
+            end)
         end
-   
+    end)
+end
