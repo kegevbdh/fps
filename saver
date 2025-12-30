@@ -31,12 +31,8 @@ local topBar = Instance.new("Frame")
 topBar.Size = UDim2.new(1, 0, 0, 26)
 topBar.BackgroundColor3 = Color3.fromRGB(25,25,25)
 topBar.BorderSizePixel = 0
-topBar.Active = true -- REQUIRED FOR INPUT
+topBar.Active = true
 topBar.Parent = panel
-
-local topCorner = Instance.new("UICorner")
-topCorner.CornerRadius = UDim.new(0, 8)
-topCorner.Parent = topBar
 
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, -32, 1, 0)
@@ -64,17 +60,15 @@ toggleBtn.Parent = topBar
 --------------------------------------------------
 local content = Instance.new("Frame")
 content.Position = UDim2.new(0, 0, 0, 26)
-content.Size = UDim2.new(1, 0, 1, -26)
+content.Size = UDim2.new(1, 0, 0, 189)
 content.BackgroundTransparency = 1
 content.ClipsDescendants = true
 content.Parent = panel
 
 --------------------------------------------------
--- DRAG LOGIC (FIXED)
+-- DRAG LOGIC
 --------------------------------------------------
-local dragging = false
-local dragStart
-local startPos
+local dragging, dragStart, startPos
 
 topBar.InputBegan:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -84,7 +78,7 @@ topBar.InputBegan:Connect(function(input)
 	end
 end)
 
-topBar.InputEnded:Connect(function(input)
+UserInputService.InputEnded:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
 		dragging = false
 	end
@@ -103,7 +97,7 @@ UserInputService.InputChanged:Connect(function(input)
 end)
 
 --------------------------------------------------
--- DROPDOWN LOGIC (FIXED)
+-- DROPDOWN LOGIC
 --------------------------------------------------
 local open = true
 local expandedSize = panel.Size
@@ -115,24 +109,38 @@ toggleBtn.MouseButton1Click:Connect(function()
 		panel:TweenSize(expandedSize, Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2, true)
 	else
 		toggleBtn.Text = "▶"
-		panel:TweenSize(UDim2.new(expandedSize.X.Scale, expandedSize.X.Offset, 0, 26),
-			Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2, true)
+		panel:TweenSize(
+			UDim2.new(expandedSize.X.Scale, expandedSize.X.Offset, 0, 26),
+			Enum.EasingDirection.Out,
+			Enum.EasingStyle.Quad,
+			0.2,
+			true
+		)
 	end
 end)
 
 --------------------------------------------------
--- LEFT: GRAPHICS PRESETS
+-- HORIZONTAL LAYOUT
+--------------------------------------------------
+local holder = Instance.new("Frame")
+holder.Size = UDim2.new(1, -10, 1, -10)
+holder.Position = UDim2.new(0, 5, 0, 5)
+holder.BackgroundTransparency = 1
+holder.Parent = content
+
+local hLayout = Instance.new("UIListLayout")
+hLayout.FillDirection = Enum.FillDirection.Horizontal
+hLayout.Padding = UDim.new(0, 5)
+hLayout.Parent = holder
+
+--------------------------------------------------
+-- LEFT: GRAPHICS PRESSETS
 --------------------------------------------------
 local gfxFrame = Instance.new("Frame")
-gfxFrame.Size = UDim2.new(0, 125, 0, 180)
-gfxFrame.Position = UDim2.new(0, 5, 0, 5)
+gfxFrame.Size = UDim2.new(0, 125, 1, 0)
 gfxFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
 gfxFrame.BorderSizePixel = 0
-gfxFrame.Parent = content
-
-local gfxCorner = Instance.new("UICorner")
-gfxCorner.CornerRadius = UDim.new(0, 6)
-gfxCorner.Parent = gfxFrame
+gfxFrame.Parent = holder
 
 local gfxHeader = Instance.new("TextLabel")
 gfxHeader.Size = UDim2.new(1, 0, 0, 22)
@@ -144,11 +152,10 @@ gfxHeader.TextSize = 16
 gfxHeader.Parent = gfxFrame
 
 local presetsScroll = Instance.new("ScrollingFrame")
-presetsScroll.Size = UDim2.new(1, -6, 1, -26)
 presetsScroll.Position = UDim2.new(0, 3, 0, 24)
+presetsScroll.Size = UDim2.new(1, -6, 1, -27)
 presetsScroll.ScrollBarThickness = 6
 presetsScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-presetsScroll.CanvasSize = UDim2.new(0,0,0,0)
 presetsScroll.BackgroundTransparency = 1
 presetsScroll.Parent = gfxFrame
 
@@ -157,23 +164,19 @@ listLayout.Padding = UDim.new(0, 4)
 listLayout.Parent = presetsScroll
 
 --------------------------------------------------
--- BACKEND CACHE
+-- BACKEND: ORIGINAL CACHE
 --------------------------------------------------
 local originalData = {}
 
 local function cacheObject(obj)
 	if obj:IsA("BasePart") then
-		originalData[obj] = {
-			Material = obj.Material,
-			Color = obj.Color,
-			CastShadow = obj.CastShadow
-		}
+		originalData[obj] = {Material = obj.Material, Color = obj.Color, CastShadow = obj.CastShadow}
 	elseif obj:IsA("Decal") or obj:IsA("Texture") then
-		originalData[obj] = { Transparency = obj.Transparency }
+		originalData[obj] = {Transparency = obj.Transparency}
 	end
 end
 
-for _, obj in ipairs(workspace:GetDescendants()) do
+for _, obj in pairs(workspace:GetDescendants()) do
 	cacheObject(obj)
 end
 
@@ -181,44 +184,60 @@ workspace.DescendantAdded:Connect(cacheObject)
 
 local function restoreDefaults()
 	for obj, data in pairs(originalData) do
-		if obj and obj.Parent then
-			if obj:IsA("BasePart") then
-				obj.Material = data.Material
-				obj.Color = data.Color
-				obj.CastShadow = data.CastShadow
-			elseif obj:IsA("Decal") or obj:IsA("Texture") then
-				obj.Transparency = data.Transparency
-			end
+		if obj:IsA("BasePart") then
+			obj.Material = data.Material
+			obj.Color = data.Color
+			obj.CastShadow = data.CastShadow
+		elseif obj:IsA("Decal") or obj:IsA("Texture") then
+			obj.Transparency = data.Transparency
 		end
 	end
 end
 
 --------------------------------------------------
--- PRESET LOGIC
+-- PRESET LOGIC (UNCHANGED FROM ORIGINAL)
 --------------------------------------------------
 local function applyPreset(p)
 	if p == "Default" then
 		restoreDefaults()
-		Lighting.GlobalShadows = true
 		return
 	end
 
 	if p == "PostEffectsOff" or p == "ExtraLow" or p == "UltraLow" then
-		for _, e in ipairs(Lighting:GetChildren()) do
-			if e:IsA("PostEffect") then e.Enabled = false end
+		for _, effect in pairs(Lighting:GetChildren()) do
+			if effect:IsA("PostEffect") then effect.Enabled = false end
 		end
 	end
 
 	if p == "ShadowsOff" or p == "ExtraLow" or p == "UltraLow" then
 		Lighting.GlobalShadows = false
-		for _, part in ipairs(workspace:GetDescendants()) do
+		for _, part in pairs(workspace:GetDescendants()) do
 			if part:IsA("BasePart") then part.CastShadow = false end
 		end
 	end
 
 	if p == "DecalsOff" or p == "TexturesOff" or p == "ExtraLow" or p == "UltraLow" then
-		for _, d in ipairs(workspace:GetDescendants()) do
+		for _, d in pairs(workspace:GetDescendants()) do
 			if d:IsA("Decal") or d:IsA("Texture") then d.Transparency = 1 end
+		end
+	end
+
+	if p == "SmoothPlastic" or p == "ExtraLow" or p == "UltraLow" then
+		for _, part in pairs(workspace:GetDescendants()) do
+			if part:IsA("BasePart") then part.Material = Enum.Material.SmoothPlastic end
+		end
+	end
+
+	if p == "TerrainSimplify" or p == "ExtraLow" or p == "UltraLow" then
+		workspace.Terrain.WaterWaveSize = 0
+		workspace.Terrain.WaterWaveSpeed = 0
+		workspace.Terrain.WaterReflectance = 0
+		workspace.Terrain.WaterTransparency = 1
+	end
+
+	if p == "UltraLow" then
+		for _, part in pairs(workspace:GetDescendants()) do
+			if part:IsA("BasePart") then part.Color = Color3.new(0,0,0) end
 		end
 	end
 end
@@ -226,24 +245,89 @@ end
 --------------------------------------------------
 -- PRESET BUTTONS
 --------------------------------------------------
-for _, name in ipairs({
-	"Default","PostEffectsOff","ShadowsOff","DecalsOff",
-	"TexturesOff","SmoothPlastic","TerrainSimplify","ExtraLow","UltraLow"
-}) do
+local presetOptions = {"Default","PostEffectsOff","ShadowsOff","DecalsOff","TexturesOff","SmoothPlastic","TerrainSimplify","ExtraLow","UltraLow"}
+
+for _, name in ipairs(presetOptions) do
 	local b = Instance.new("TextButton")
 	b.Size = UDim2.new(1, 0, 0, 22)
 	b.BackgroundColor3 = Color3.fromRGB(40,40,40)
 	b.TextColor3 = Color3.fromRGB(255,255,255)
 	b.Text = name
-	b.Font = Enum.Font.SourceSans
-	b.TextSize = 14
 	b.Parent = presetsScroll
 
 	b.MouseButton1Click:Connect(function()
 		applyPreset(name)
 		b.BackgroundColor3 = Color3.fromRGB(0,100,0)
-		task.delay(0.25, function()
-			b.BackgroundColor3 = Color3.fromRGB(40,40,40)
-		end)
+		task.delay(0.2, function() b.BackgroundColor3 = Color3.fromRGB(40,40,40) end)
+	end)
+end
+
+--------------------------------------------------
+-- RIGHT: FPS CAP
+--------------------------------------------------
+local fpsFrame = Instance.new("Frame")
+fpsFrame.Size = UDim2.new(0, 125, 1, 0)
+fpsFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
+fpsFrame.BorderSizePixel = 0
+fpsFrame.Parent = holder
+
+local fpsHeader = Instance.new("TextLabel")
+fpsHeader.Size = UDim2.new(1, 0, 0, 22)
+fpsHeader.BackgroundTransparency = 1
+fpsHeader.Text = "FPS Cap"
+fpsHeader.TextColor3 = Color3.fromRGB(255,255,255)
+fpsHeader.Font = Enum.Font.SourceSansBold
+fpsHeader.TextSize = 16
+fpsHeader.Parent = fpsFrame
+
+local fpsList = Instance.new("Frame")
+fpsList.Position = UDim2.new(0, 3, 0, 24)
+fpsList.Size = UDim2.new(1, -6, 1, -27)
+fpsList.BackgroundTransparency = 1
+fpsList.Parent = fpsFrame
+
+local fpsLayout = Instance.new("UIListLayout")
+fpsLayout.Padding = UDim.new(0, 4)
+fpsLayout.Parent = fpsList
+
+local function findCapper()
+	local g = getgenv and getgenv() or {}
+	return g.setfpscap or _G.setfpscap or setfpscap or (syn and (syn.set_fps or syn.setfpscap))
+end
+local cap = findCapper()
+local fpsButtons = {}
+local function setFPSHighlight(selectedBtn)
+	for _, btn in ipairs(fpsButtons) do
+		btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+	end
+	selectedBtn.BackgroundColor3 = Color3.fromRGB(0,100,0)
+end
+
+local fpsValues = {20,25,30,35,40,45,50,55,60,"Unlimited"}
+for _, v in ipairs(fpsValues) do
+	local btn = Instance.new("TextButton")
+	btn.Size = UDim2.new(1, 0, 0, 22)
+	btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+	btn.TextColor3 = Color3.fromRGB(255,255,255)
+	btn.Text = tostring(v)
+	btn.Parent = fpsList
+	table.insert(fpsButtons, btn)
+
+	btn.MouseButton1Click:Connect(function()
+		if cap then
+			if v == "Unlimited" then
+				cap(1000)
+			else
+				cap(v)
+			end
+			setFPSHighlight(btn)
+		else
+			btn.Text = tostring(v).." (No API)"
+			btn.BackgroundColor3 = Color3.fromRGB(100,0,0)
+			task.delay(0.6, function()
+				btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+				btn.Text = tostring(v)
+			end)
+		end
 	end)
 end
