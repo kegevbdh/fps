@@ -1,70 +1,16 @@
---------------------------------------------------
--- SINGLE PANEL: Graphics + FPS
---------------------------------------------------
+-- Services
 local UserInputService = game:GetService("UserInputService")
 local Lighting = game:GetService("Lighting")
 
--- Parent frame containing both sections
+-- Parent panel (replace 'workspace' with your GUI parent)
 local panel = Instance.new("Frame")
 panel.Name = "SettingsPanel"
 panel.Size = UDim2.new(0, 270, 0, 180)
 panel.Position = UDim2.new(0, 0, 0, 0)
 panel.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-panel.Parent = game.CoreGui -- or your preferred parent
+panel.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui") -- safe parent
 
---------------------------------------------------
--- LEFT: Graphics Presets
---------------------------------------------------
-local gfxFrame = Instance.new("Frame")
-gfxFrame.Name = "GraphicsFrame"
-gfxFrame.Size = UDim2.new(0, 125, 1, 0)
-gfxFrame.Position = UDim2.new(0, 0, 0, 0)
-gfxFrame.BackgroundTransparency = 1
-gfxFrame.Parent = panel
-
-local gfxTopBar = Instance.new("Frame")
-gfxTopBar.Size = UDim2.new(1, 0, 0, 22)
-gfxTopBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-gfxTopBar.Parent = gfxFrame
-
-local gfxHeader = Instance.new("TextLabel")
-gfxHeader.Size = UDim2.new(1, -22, 1, 0)
-gfxHeader.Position = UDim2.new(0, 0, 0, 0)
-gfxHeader.BackgroundTransparency = 1
-gfxHeader.TextColor3 = Color3.fromRGB(255, 255, 255)
-gfxHeader.Text = "Graphics Presets"
-gfxHeader.Font = Enum.Font.SourceSansBold
-gfxHeader.TextSize = 16
-gfxHeader.Parent = gfxTopBar
-
---------------------------------------------------
--- RIGHT: FPS Caps
---------------------------------------------------
-local fpsFrame = Instance.new("Frame")
-fpsFrame.Name = "FPSFrame"
-fpsFrame.Size = UDim2.new(0, 125, 1, 0)
-fpsFrame.Position = UDim2.new(0, 145, 0, 0)
-fpsFrame.BackgroundTransparency = 1
-fpsFrame.Parent = panel
-
-local fpsTopBar = Instance.new("Frame")
-fpsTopBar.Size = UDim2.new(1, 0, 0, 22)
-fpsTopBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-fpsTopBar.Parent = fpsFrame
-
-local fpsHeader = Instance.new("TextLabel")
-fpsHeader.Size = UDim2.new(1, -22, 1, 0)
-fpsHeader.Position = UDim2.new(0, 0, 0, 0)
-fpsHeader.BackgroundTransparency = 1
-fpsHeader.TextColor3 = Color3.fromRGB(255, 255, 255)
-fpsHeader.Text = "FPS Cap"
-fpsHeader.Font = Enum.Font.SourceSansBold
-fpsHeader.TextSize = 16
-fpsHeader.Parent = fpsTopBar
-
---------------------------------------------------
--- TOGGLE BUTTON (controls both gfx + fps)
---------------------------------------------------
+-- MAIN TOGGLE BUTTON (controls entire panel)
 local toggleBtn = Instance.new("TextButton")
 toggleBtn.Size = UDim2.new(0, 22, 0, 22)
 toggleBtn.Position = UDim2.new(1, -22, 0, 0)
@@ -73,45 +19,91 @@ toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 toggleBtn.Text = "▼"
 toggleBtn.Font = Enum.Font.SourceSansBold
 toggleBtn.TextSize = 16
-toggleBtn.Parent = gfxTopBar -- attach to left header
+toggleBtn.Parent = panel
 
---------------------------------------------------
--- SCROLLING FRAMES
---------------------------------------------------
-local presetsScroll = Instance.new("ScrollingFrame")
-presetsScroll.Size = UDim2.new(1, -6, 1, -26)
-presetsScroll.Position = UDim2.new(0, 3, 0, 24)
-presetsScroll.BackgroundTransparency = 1
-presetsScroll.ScrollBarThickness = 6
-presetsScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-presetsScroll.Parent = gfxFrame
+-- LEFT: Graphics
+local gfxFrame = Instance.new("Frame")
+gfxFrame.Size = UDim2.new(0, 125, 1, 0)
+gfxFrame.Position = UDim2.new(0, 0, 0, 0)
+gfxFrame.BackgroundTransparency = 1
+gfxFrame.Parent = panel
 
-local gfxListLayout = Instance.new("UIListLayout")
-gfxListLayout.Parent = presetsScroll
-gfxListLayout.Padding = UDim.new(0, 4)
+local gfxLabel = Instance.new("TextLabel")
+gfxLabel.Size = UDim2.new(1, -22, 0, 22)
+gfxLabel.Position = UDim2.new(0, 0, 0, 0)
+gfxLabel.BackgroundTransparency = 1
+gfxLabel.TextColor3 = Color3.fromRGB(255,255,255)
+gfxLabel.Text = "Graphics Presets"
+gfxLabel.Font = Enum.Font.SourceSansBold
+gfxLabel.TextSize = 16
+gfxLabel.Parent = gfxFrame
 
-local fpsList = Instance.new("Frame")
-fpsList.Size = UDim2.new(1, -6, 1, -26)
-fpsList.Position = UDim2.new(0, 3, 0, 24)
-fpsList.BackgroundTransparency = 1
-fpsList.Parent = fpsFrame
+local gfxScroll = Instance.new("ScrollingFrame")
+gfxScroll.Size = UDim2.new(1, -6, 1, -26)
+gfxScroll.Position = UDim2.new(0, 3, 0, 24)
+gfxScroll.BackgroundTransparency = 1
+gfxScroll.ScrollBarThickness = 6
+gfxScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+gfxScroll.Parent = gfxFrame
+
+local gfxList = Instance.new("UIListLayout")
+gfxList.Padding = UDim.new(0, 4)
+gfxList.Parent = gfxScroll
+
+-- RIGHT: FPS
+local fpsFrame = Instance.new("Frame")
+fpsFrame.Size = UDim2.new(0, 125, 1, 0)
+fpsFrame.Position = UDim2.new(0, 145, 0, 0)
+fpsFrame.BackgroundTransparency = 1
+fpsFrame.Parent = panel
+
+local fpsLabel = Instance.new("TextLabel")
+fpsLabel.Size = UDim2.new(1, -22, 0, 22)
+fpsLabel.Position = UDim2.new(0, 0, 0, 0)
+fpsLabel.BackgroundTransparency = 1
+fpsLabel.TextColor3 = Color3.fromRGB(255,255,255)
+fpsLabel.Text = "FPS Cap"
+fpsLabel.Font = Enum.Font.SourceSansBold
+fpsLabel.TextSize = 16
+fpsLabel.Parent = fpsFrame
+
+local fpsListFrame = Instance.new("Frame")
+fpsListFrame.Size = UDim2.new(1, -6, 1, -26)
+fpsListFrame.Position = UDim2.new(0, 3, 0, 24)
+fpsListFrame.BackgroundTransparency = 1
+fpsListFrame.Parent = fpsFrame
 
 local fpsListLayout = Instance.new("UIListLayout")
-fpsListLayout.Parent = fpsList
 fpsListLayout.Padding = UDim.new(0, 4)
+fpsListLayout.Parent = fpsListFrame
 
 --------------------------------------------------
--- PANEL DRAGGING (entire panel)
+-- DROPDOWN TOGGLE
+--------------------------------------------------
+local open = true
+local expandedSize = panel.Size
+local collapsedHeight = 26
+
+toggleBtn.MouseButton1Click:Connect(function()
+    open = not open
+    if open then
+        toggleBtn.Text = "▼"
+        panel:TweenSize(expandedSize, Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2, true)
+    else
+        toggleBtn.Text = "▶"
+        panel:TweenSize(UDim2.new(expandedSize.X.Scale, expandedSize.X.Offset, 0, collapsedHeight), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2, true)
+    end
+end)
+
+--------------------------------------------------
+-- PANEL DRAGGING
 --------------------------------------------------
 do
-    local dragging, dragStart, startPos
+    local dragging = false
+    local dragStart = nil
+    local startPos = nil
 
-    local topBar = Instance.new("Frame")
-    topBar.Size = UDim2.new(1, 0, 0, 22)
-    topBar.BackgroundTransparency = 1
-    topBar.Parent = panel
-
-    topBar.InputBegan:Connect(function(input)
+    panel.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
             dragStart = input.Position
@@ -119,182 +111,130 @@ do
         end
     end)
 
-    UserInputService.InputEnded:Connect(function(input)
+    panel.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = false
         end
     end)
 
-    UserInputService.InputChanged:Connect(function(input)
+    panel.InputChanged:Connect(function(input)
         if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
             local delta = input.Position - dragStart
-            panel.Position = UDim2.new(
-                startPos.X.Scale,
-                startPos.X.Offset + delta.X,
-                startPos.Y.Scale,
-                startPos.Y.Offset + delta.Y
-            )
+            panel.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end
     end)
 end
 
 --------------------------------------------------
--- DROPDOWN TOGGLE (gfx + fps together)
---------------------------------------------------
-do
-    local open = true
-    local expandedSize = panel.Size
-    local collapsedHeight = 22 -- top bar height only
-
-    toggleBtn.MouseButton1Click:Connect(function()
-        open = not open
-        if open then
-            toggleBtn.Text = "▼"
-            panel:TweenSize(expandedSize, Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2, true)
-        else
-            toggleBtn.Text = "▶"
-            panel:TweenSize(
-                UDim2.new(expandedSize.X.Scale, expandedSize.X.Offset, 0, collapsedHeight),
-                Enum.EasingDirection.Out,
-                Enum.EasingStyle.Quad,
-                0.2,
-                true
-            )
-        end
-    end)
-end
-
---------------------------------------------------
--- GRAPHICS PRESETS LIST
+-- GRAPHICS PRESETS
 --------------------------------------------------
 local originalData = {}
-
 local function cacheObject(obj)
     if obj:IsA("BasePart") then
-        originalData[obj] = {Material = obj.Material, Color = obj.Color, CastShadow = obj.CastShadow}
+        originalData[obj] = {Material=obj.Material, Color=obj.Color, CastShadow=obj.CastShadow}
     elseif obj:IsA("Decal") or obj:IsA("Texture") then
-        originalData[obj] = {Transparency = obj.Transparency}
+        originalData[obj] = {Transparency=obj.Transparency}
     end
 end
 
-for _, obj in pairs(workspace:GetDescendants()) do
-    cacheObject(obj)
-end
+for _, obj in pairs(workspace:GetDescendants()) do cacheObject(obj) end
 workspace.DescendantAdded:Connect(cacheObject)
 
 local function restoreDefaults()
-    for obj, data in pairs(originalData) do
+    for obj,data in pairs(originalData) do
         if obj:IsA("BasePart") then
-            obj.Material = data.Material
-            obj.Color = data.Color
-            obj.CastShadow = data.CastShadow
+            obj.Material=data.Material
+            obj.Color=data.Color
+            obj.CastShadow=data.CastShadow
         elseif obj:IsA("Decal") or obj:IsA("Texture") then
-            obj.Transparency = data.Transparency
+            obj.Transparency=data.Transparency
         end
     end
 end
 
 local function applyPreset(p)
-    if p == "Default" then
-        restoreDefaults()
-        return
-    end
-    if p == "PostEffectsOff" or p == "ExtraLow" or p == "UltraLow" then
-        for _, effect in pairs(Lighting:GetChildren()) do
-            if effect:IsA("PostEffect") then effect.Enabled = false end
+    if p=="Default" then restoreDefaults() return end
+    if p=="PostEffectsOff" or p=="ExtraLow" or p=="UltraLow" then
+        for _,effect in pairs(Lighting:GetChildren()) do
+            if effect:IsA("PostEffect") then effect.Enabled=false end
         end
     end
-    if p == "ShadowsOff" or p == "ExtraLow" or p == "UltraLow" then
-        Lighting.GlobalShadows = false
-        for _, part in pairs(workspace:GetDescendants()) do
-            if part:IsA("BasePart") then part.CastShadow = false end
+    if p=="ShadowsOff" or p=="ExtraLow" or p=="UltraLow" then
+        Lighting.GlobalShadows=false
+        for _,part in pairs(workspace:GetDescendants()) do
+            if part:IsA("BasePart") then part.CastShadow=false end
         end
     end
-    if p == "DecalsOff" or p == "TexturesOff" or p == "ExtraLow" or p == "UltraLow" then
-        for _, d in pairs(workspace:GetDescendants()) do
-            if d:IsA("Decal") or d:IsA("Texture") then d.Transparency = 1 end
+    if p=="DecalsOff" or p=="TexturesOff" or p=="ExtraLow" or p=="UltraLow" then
+        for _,d in pairs(workspace:GetDescendants()) do
+            if d:IsA("Decal") or d:IsA("Texture") then d.Transparency=1 end
         end
     end
-    if p == "SmoothPlastic" or p == "ExtraLow" or p == "UltraLow" then
-        for _, part in pairs(workspace:GetDescendants()) do
-            if part:IsA("BasePart") then part.Material = Enum.Material.SmoothPlastic end
+    if p=="SmoothPlastic" or p=="ExtraLow" or p=="UltraLow" then
+        for _,part in pairs(workspace:GetDescendants()) do
+            if part:IsA("BasePart") then part.Material=Enum.Material.SmoothPlastic end
         end
     end
-    if p == "TerrainSimplify" or p == "ExtraLow" or p == "UltraLow" then
-        workspace.Terrain.WaterWaveSize = 0
-        workspace.Terrain.WaterWaveSpeed = 0
-        workspace.Terrain.WaterReflectance = 0
-        workspace.Terrain.WaterTransparency = 1
+    if p=="TerrainSimplify" or p=="ExtraLow" or p=="UltraLow" then
+        workspace.Terrain.WaterWaveSize=0
+        workspace.Terrain.WaterWaveSpeed=0
+        workspace.Terrain.WaterReflectance=0
+        workspace.Terrain.WaterTransparency=1
     end
-    if p == "UltraLow" then
-        for _, part in pairs(workspace:GetDescendants()) do
-            if part:IsA("BasePart") then part.Color = Color3.new(0, 0, 0) end
+    if p=="UltraLow" then
+        for _,part in pairs(workspace:GetDescendants()) do
+            if part:IsA("BasePart") then part.Color=Color3.new(0,0,0) end
         end
     end
 end
 
-local presetOptions = {
-    "Default", "PostEffectsOff", "ShadowsOff", "DecalsOff",
-    "TexturesOff", "SmoothPlastic", "TerrainSimplify", "ExtraLow", "UltraLow"
-}
-
-for _, name in ipairs(presetOptions) do
+local presetOptions = {"Default","PostEffectsOff","ShadowsOff","DecalsOff","TexturesOff","SmoothPlastic","TerrainSimplify","ExtraLow","UltraLow"}
+for _,name in ipairs(presetOptions) do
     local b = Instance.new("TextButton")
-    b.Size = UDim2.new(1, 0, 0, 22)
-    b.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    b.TextColor3 = Color3.fromRGB(255, 255, 255)
-    b.Text = name
-    b.Parent = presetsScroll
+    b.Size=UDim2.new(1,0,0,22)
+    b.BackgroundColor3=Color3.fromRGB(40,40,40)
+    b.TextColor3=Color3.fromRGB(255,255,255)
+    b.Text=name
+    b.Parent=gfxScroll
     b.MouseButton1Click:Connect(function()
         applyPreset(name)
-        b.BackgroundColor3 = Color3.fromRGB(0, 100, 0)
-        task.delay(0.2, function() b.BackgroundColor3 = Color3.fromRGB(40, 40, 40) end)
+        b.BackgroundColor3=Color3.fromRGB(0,100,0)
+        task.delay(0.2,function() b.BackgroundColor3=Color3.fromRGB(40,40,40) end)
     end)
 end
 
 --------------------------------------------------
--- FPS BUTTONS
+-- FPS Buttons
 --------------------------------------------------
 local function findCapper()
-    local g = getgenv and getgenv() or {}
+    local g=getgenv and getgenv() or {}
     return g.setfpscap or _G.setfpscap or setfpscap or (syn and (syn.set_fps or syn.setfpscap))
 end
 local cap = findCapper()
 
-local fpsValues = {20, 25, 30, 35, 40, 45, 50, 55, 60, "Unlimited"}
+local fpsValues = {20,25,30,35,40,45,50,55,60,"Unlimited"}
 local fpsButtons = {}
-
-local function setFPSHighlight(selectedBtn)
-    for _, btn in ipairs(fpsButtons) do
-        btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    end
-    selectedBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 0)
+local function setFPSHighlight(btn)
+    for _,b in ipairs(fpsButtons) do b.BackgroundColor3=Color3.fromRGB(40,40,40) end
+    btn.BackgroundColor3=Color3.fromRGB(0,100,0)
 end
 
-for _, v in ipairs(fpsValues) do
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 22)
-    btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.Text = tostring(v)
-    btn.Parent = fpsList
-    table.insert(fpsButtons, btn)
-
-    btn.MouseButton1Click:Connect(function()
+for _,v in ipairs(fpsValues) do
+    local b=Instance.new("TextButton")
+    b.Size=UDim2.new(1,0,0,22)
+    b.BackgroundColor3=Color3.fromRGB(40,40,40)
+    b.TextColor3=Color3.fromRGB(255,255,255)
+    b.Text=tostring(v)
+    b.Parent=fpsListFrame
+    table.insert(fpsButtons,b)
+    b.MouseButton1Click:Connect(function()
         if cap then
-            if v == "Unlimited" then
-                cap(1000)
-            else
-                cap(v)
-            end
-            setFPSHighlight(btn)
+            if v=="Unlimited" then cap(1000) else cap(v) end
+            setFPSHighlight(b)
         else
-            btn.Text = tostring(v) .. " (No API)"
-            btn.BackgroundColor3 = Color3.fromRGB(100, 0, 0)
-            task.delay(0.6, function()
-                btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-                btn.Text = tostring(v)
-            end)
+            b.Text=tostring(v).." (No API)"
+            b.BackgroundColor3=Color3.fromRGB(100,0,0)
+            task.delay(0.6,function() b.BackgroundColor3=Color3.fromRGB(40,40,40) b.Text=tostring(v) end)
         end
     end)
 end
