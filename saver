@@ -1,6 +1,3 @@
--- Side-by-Side Performance Panel (Restorable Presets + FPS Highlight)
--- Run via executor
-
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local Lighting = game:GetService("Lighting")
@@ -208,15 +205,40 @@ local function findCapper()
 end
 local cap = findCapper()
 
+-- Track all FPS buttons for exclusive highlight
 local fpsButtons = {}
 local function setFPSHighlight(selectedBtn)
     for _, btn in ipairs(fpsButtons) do
-        btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+        btn.BackgroundColor3 = Color3.fromRGB(40,40,40) -- reset all to gray
     end
-    selectedBtn.BackgroundColor3 = Color3.fromRGB(0,100,0)
+    selectedBtn.BackgroundColor3 = Color3.fromRGB(0,100,0) -- green for active
 end
 
 local fpsValues = {20,25,30,35,40,45,50,55,60,"Unlimited"}
 for _, v in ipairs(fpsValues) do
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0,
+    btn.Size = UDim2.new(1, 0, 0, 22)
+    btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+    btn.TextColor3 = Color3.fromRGB(255,255,255)
+    btn.Text = tostring(v)
+    btn.Parent = fpsList
+    table.insert(fpsButtons, btn)
+
+    btn.MouseButton1Click:Connect(function()
+        if cap then
+            if v == "Unlimited" then
+                cap(1000)
+            else
+                cap(v)
+            end
+            setFPSHighlight(btn)
+        else
+            btn.Text = tostring(v).." (No API)"
+            btn.BackgroundColor3 = Color3.fromRGB(100,0,0)
+            task.delay(0.6, function()
+                btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+                btn.Text = tostring(v)
+            end)
+        end
+    end)
+end
