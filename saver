@@ -1,4 +1,4 @@
--- Performance + FPS Control Panel (Executor Safe, Persistent)
+-- Performance + FPS Control Panel (Side by Side, All Options Visible)
 -- Run via executor
 
 local Players = game:GetService("Players")
@@ -15,35 +15,24 @@ if not gui then
     gui.Parent = player:WaitForChild("PlayerGui")
 end
 
--- Helper to make buttons
-local function makeButton(name, yPos, text)
-    local btn = Instance.new("TextButton")
-    btn.Name = name
-    btn.Size = UDim2.new(0, 120, 0, 25)
-    btn.Position = UDim2.new(1, -130, 0, yPos)
-    btn.BackgroundColor3 = Color3.fromRGB(30,30,30)
-    btn.TextColor3 = Color3.fromRGB(255,255,255)
-    btn.Text = text
-    btn.Parent = gui
-    return btn
-end
+-- Graphics Preset Panel
+local gfxFrame = Instance.new("Frame")
+gfxFrame.Name = "GraphicsFrame"
+gfxFrame.Size = UDim2.new(0, 120, 0, 80)
+gfxFrame.Position = UDim2.new(1, -260, 0, 10) -- left side
+gfxFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
+gfxFrame.Parent = gui
 
---------------------------------------------------
--- Graphics Preset Dropdown
---------------------------------------------------
-local gfxBtn = makeButton("GraphicsPresetButton", 10, "Preset: Default")
-local gfxDrop = Instance.new("Frame")
-gfxDrop.Size = UDim2.new(0, 120, 0, 60)
-gfxDrop.Position = UDim2.new(1, -130, 0, 35)
-gfxDrop.BackgroundColor3 = Color3.fromRGB(20,20,20)
-gfxDrop.Visible = false
-gfxDrop.Parent = gui
+local gfxLabel = Instance.new("TextLabel")
+gfxLabel.Size = UDim2.new(1,0,0,20)
+gfxLabel.BackgroundTransparency = 1
+gfxLabel.TextColor3 = Color3.fromRGB(255,255,255)
+gfxLabel.Text = "Graphics Preset"
+gfxLabel.Parent = gfxFrame
 
 local function applyPreset(level)
     if level == "Default" then
-        gfxBtn.Text = "Preset: Default"
-        gfxBtn.BackgroundColor3 = Color3.fromRGB(30,30,30)
-
+        gfxLabel.Text = "Graphics Preset: Default"
     elseif level == "ExtraLow" then
         for _, effect in pairs(Lighting:GetChildren()) do
             if effect:IsA("PostEffect") then effect.Enabled = false end
@@ -61,9 +50,7 @@ local function applyPreset(level)
         workspace.Terrain.WaterWaveSpeed = 0
         workspace.Terrain.WaterReflectance = 0
         workspace.Terrain.WaterTransparency = 1
-        gfxBtn.Text = "Preset: ExtraLow"
-        gfxBtn.BackgroundColor3 = Color3.fromRGB(100,0,0)
-
+        gfxLabel.Text = "Graphics Preset: ExtraLow"
     elseif level == "UltraLow" then
         for _, effect in pairs(Lighting:GetChildren()) do
             if effect:IsA("PostEffect") then effect.Enabled = false end
@@ -82,8 +69,7 @@ local function applyPreset(level)
         workspace.Terrain.WaterWaveSpeed = 0
         workspace.Terrain.WaterReflectance = 0
         workspace.Terrain.WaterTransparency = 1
-        gfxBtn.Text = "Preset: UltraLow"
-        gfxBtn.BackgroundColor3 = Color3.fromRGB(0,0,0)
+        gfxLabel.Text = "Graphics Preset: UltraLow"
     end
 end
 
@@ -91,31 +77,30 @@ local gfxOptions = {"Default","ExtraLow","UltraLow"}
 for i,v in ipairs(gfxOptions) do
     local opt = Instance.new("TextButton")
     opt.Size = UDim2.new(1,0,0,20)
-    opt.Position = UDim2.new(0,0,0,(i-1)*20)
+    opt.Position = UDim2.new(0,0,0,i*20)
     opt.BackgroundColor3 = Color3.fromRGB(40,40,40)
     opt.TextColor3 = Color3.fromRGB(255,255,255)
     opt.Text = v
-    opt.Parent = gfxDrop
+    opt.Parent = gfxFrame
     opt.MouseButton1Click:Connect(function()
         applyPreset(v)
-        gfxDrop.Visible = false
     end)
 end
 
-gfxBtn.MouseButton1Click:Connect(function()
-    gfxDrop.Visible = not gfxDrop.Visible
-end)
+-- FPS Cap Panel
+local fpsFrame = Instance.new("Frame")
+fpsFrame.Name = "FPSFrame"
+fpsFrame.Size = UDim2.new(0, 120, 0, 140)
+fpsFrame.Position = UDim2.new(1, -130, 0, 10) -- right side
+fpsFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
+fpsFrame.Parent = gui
 
---------------------------------------------------
--- FPS Cap Dropdown
---------------------------------------------------
-local fpsBtn = makeButton("FPSButton", 70, "FPS: Unlimited")
-local fpsDrop = Instance.new("Frame")
-fpsDrop.Size = UDim2.new(0, 120, 0, 120)
-fpsDrop.Position = UDim2.new(1, -130, 0, 95)
-fpsDrop.BackgroundColor3 = Color3.fromRGB(20,20,20)
-fpsDrop.Visible = false
-fpsDrop.Parent = gui
+local fpsLabel = Instance.new("TextLabel")
+fpsLabel.Size = UDim2.new(1,0,0,20)
+fpsLabel.BackgroundTransparency = 1
+fpsLabel.TextColor3 = Color3.fromRGB(255,255,255)
+fpsLabel.Text = "FPS Cap"
+fpsLabel.Parent = fpsFrame
 
 local function findCapper()
     local g = getgenv and getgenv() or {}
@@ -127,30 +112,22 @@ local fpsValues = {20,30,40,50,60,"Unlimited"}
 for i,v in ipairs(fpsValues) do
     local opt = Instance.new("TextButton")
     opt.Size = UDim2.new(1,0,0,20)
-    opt.Position = UDim2.new(0,0,0,(i-1)*20)
+    opt.Position = UDim2.new(0,0,0,i*20)
     opt.BackgroundColor3 = Color3.fromRGB(40,40,40)
     opt.TextColor3 = Color3.fromRGB(255,255,255)
     opt.Text = tostring(v)
-    opt.Parent = fpsDrop
+    opt.Parent = fpsFrame
     opt.MouseButton1Click:Connect(function()
         if cap then
             if v == "Unlimited" then
                 cap(1000)
-                fpsBtn.Text = "FPS: Unlimited"
-                fpsBtn.BackgroundColor3 = Color3.fromRGB(30,30,30)
+                fpsLabel.Text = "FPS Cap: Unlimited"
             else
                 cap(v)
-                fpsBtn.Text = "FPS: "..v
-                fpsBtn.BackgroundColor3 = Color3.fromRGB(0,100,0)
+                fpsLabel.Text = "FPS Cap: "..v
             end
         else
-            fpsBtn.Text = "No API"
-            fpsBtn.BackgroundColor3 = Color3.fromRGB(100,0,0)
+            fpsLabel.Text = "FPS Cap: No API"
         end
-        fpsDrop.Visible = false
     end)
 end
-
-fpsBtn.MouseButton1Click:Connect(function()
-    fpsDrop.Visible = not fpsDrop.Visible
-end)
