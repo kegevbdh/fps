@@ -1,292 +1,150 @@
---// SERVICES
-local Players = game:GetService("Players")
+--------------------------------------------------
+-- LEFT: Graphics Presets (scrollable, restorable, draggable, collapsible)
+--------------------------------------------------
 local UserInputService = game:GetService("UserInputService")
 local Lighting = game:GetService("Lighting")
-local player = Players.LocalPlayer
 
---------------------------------------------------
--- GUI SETUP
---------------------------------------------------
-local gui = Instance.new("ScreenGui")
-gui.Name = "FPSGraphicsGui"
-gui.ResetOnSpawn = false
-gui.IgnoreGuiInset = false
-gui.Parent = player:WaitForChild("PlayerGui")
-
-local panel = Instance.new("Frame")
-panel.Size = UDim2.new(0, 270, 0, 215)
-panel.Position = UDim2.new(1, -290, 0, 80)
-panel.BackgroundColor3 = Color3.fromRGB(15,15,15)
-panel.BorderSizePixel = 0
-panel.Parent = gui
-
-local panelCorner = Instance.new("UICorner")
-panelCorner.CornerRadius = UDim.new(0, 8)
-panelCorner.Parent = panel
-
---------------------------------------------------
--- TOP BAR (DRAG + DROPDOWN)
---------------------------------------------------
-local topBar = Instance.new("Frame")
-topBar.Size = UDim2.new(1, 0, 0, 26)
-topBar.BackgroundColor3 = Color3.fromRGB(25,25,25)
-topBar.BorderSizePixel = 0
-topBar.Parent = panel
-
-local topCorner = Instance.new("UICorner")
-topCorner.CornerRadius = UDim.new(0, 8)
-topCorner.Parent = topBar
-
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, -30, 1, 0)
-title.Position = UDim2.new(0, 8, 0, 0)
-title.BackgroundTransparency = 1
-title.Text = "FPS / Graphics"
-title.TextColor3 = Color3.fromRGB(255,255,255)
-title.Font = Enum.Font.SourceSansBold
-title.TextSize = 15
-title.TextXAlignment = Enum.TextXAlignment.Left
-title.Parent = topBar
-
-local toggleBtn = Instance.new("TextButton")
-toggleBtn.Size = UDim2.new(0, 24, 0, 24)
-toggleBtn.Position = UDim2.new(1, -26, 0, 1)
-toggleBtn.BackgroundTransparency = 1
-toggleBtn.Text = "–"
-toggleBtn.TextColor3 = Color3.fromRGB(255,255,255)
-toggleBtn.Font = Enum.Font.SourceSansBold
-toggleBtn.TextSize = 20
-toggleBtn.Parent = topBar
-
---------------------------------------------------
--- CONTENT HOLDER
---------------------------------------------------
-local content = Instance.new("Frame")
-content.Position = UDim2.new(0, 0, 0, 26)
-content.Size = UDim2.new(1, 0, 1, -26)
-content.BackgroundTransparency = 1
-content.Parent = panel
-
---------------------------------------------------
--- DRAG LOGIC
---------------------------------------------------
-local dragging, dragStart, startPos
-
-topBar.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        dragStart = input.Position
-        startPos = panel.Position
-    end
-end)
-
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = false
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = input.Position - dragStart
-        panel.Position = UDim2.new(
-            startPos.X.Scale,
-            startPos.X.Offset + delta.X,
-            startPos.Y.Scale,
-            startPos.Y.Offset + delta.Y
-        )
-    end
-end)
-
---------------------------------------------------
--- DROPDOWN LOGIC
---------------------------------------------------
-local open = true
-local fullSize = panel.Size
-
-toggleBtn.MouseButton1Click:Connect(function()
-    open = not open
-    if open then
-        toggleBtn.Text = "–"
-        panel:TweenSize(fullSize, "Out", "Quad", 0.2, true)
-    else
-        toggleBtn.Text = "+"
-        panel:TweenSize(UDim2.new(fullSize.X.Scale, fullSize.X.Offset, 0, 26), "Out", "Quad", 0.2, true)
-    end
-end)
-
---------------------------------------------------
--- LEFT: GRAPHICS PRESETS
---------------------------------------------------
 local gfxFrame = Instance.new("Frame")
+gfxFrame.Name = "GraphicsFrame"
 gfxFrame.Size = UDim2.new(0, 125, 0, 180)
-gfxFrame.Position = UDim2.new(0, 5, 0, 5)
+gfxFrame.Position = UDim2.new(0, 0, 0, 0)
 gfxFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
-gfxFrame.BorderSizePixel = 0
-gfxFrame.Parent = content
+gfxFrame.Parent = panel
 
-local gfxCorner = Instance.new("UICorner")
-gfxCorner.CornerRadius = UDim.new(0, 6)
-gfxCorner.Parent = gfxFrame
+-- Top bar for dragging + toggle
+local gfxTopBar = Instance.new("Frame")
+gfxTopBar.Name = "TopBar"
+gfxTopBar.Size = UDim2.new(1, 0, 0, 22)
+gfxTopBar.BackgroundColor3 = Color3.fromRGB(30,30,30)
+gfxTopBar.Parent = gfxFrame
 
 local gfxHeader = Instance.new("TextLabel")
-gfxHeader.Size = UDim2.new(1, 0, 0, 22)
+gfxHeader.Size = UDim2.new(1, -22, 1, 0)
+gfxHeader.Position = UDim2.new(0, 0, 0, 0)
 gfxHeader.BackgroundTransparency = 1
-gfxHeader.Text = "Graphics Presets"
 gfxHeader.TextColor3 = Color3.fromRGB(255,255,255)
+gfxHeader.Text = "Graphics Presets"
 gfxHeader.Font = Enum.Font.SourceSansBold
 gfxHeader.TextSize = 16
-gfxHeader.Parent = gfxFrame
+gfxHeader.Parent = gfxTopBar
+
+local gfxToggleBtn = Instance.new("TextButton")
+gfxToggleBtn.Size = UDim2.new(0, 22, 1, 0)
+gfxToggleBtn.Position = UDim2.new(1, -22, 0, 0)
+gfxToggleBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+gfxToggleBtn.TextColor3 = Color3.fromRGB(255,255,255)
+gfxToggleBtn.Text = "▼"
+gfxToggleBtn.Font = Enum.Font.SourceSansBold
+gfxToggleBtn.TextSize = 16
+gfxToggleBtn.Parent = gfxTopBar
 
 local presetsScroll = Instance.new("ScrollingFrame")
+presetsScroll.Name = "PresetsScroll"
 presetsScroll.Size = UDim2.new(1, -6, 1, -26)
 presetsScroll.Position = UDim2.new(0, 3, 0, 24)
+presetsScroll.BackgroundTransparency = 1
 presetsScroll.ScrollBarThickness = 6
 presetsScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
-presetsScroll.CanvasSize = UDim2.new(0,0,0,0)
-presetsScroll.BackgroundTransparency = 1
 presetsScroll.Parent = gfxFrame
 
 local listLayout = Instance.new("UIListLayout")
-listLayout.Padding = UDim.new(0, 4)
 listLayout.Parent = presetsScroll
+listLayout.Padding = UDim.new(0, 4)
 
 --------------------------------------------------
--- BACKEND CACHE
+-- PANEL DRAGGING (gfxFrame)
 --------------------------------------------------
-local originalData = {}
+do
+    local dragging, dragStart, startPos
 
-local function cacheObject(obj)
-    if obj:IsA("BasePart") then
-        originalData[obj] = {
-            Material = obj.Material,
-            Color = obj.Color,
-            CastShadow = obj.CastShadow
-        }
-    elseif obj:IsA("Decal") or obj:IsA("Texture") then
-        originalData[obj] = {
-            Transparency = obj.Transparency
-        }
-    end
-end
-
-for _, obj in ipairs(workspace:GetDescendants()) do
-    cacheObject(obj)
-end
-
-workspace.DescendantAdded:Connect(cacheObject)
-
-local function restoreDefaults()
-    for obj, data in pairs(originalData) do
-        if obj and obj.Parent then
-            if obj:IsA("BasePart") then
-                obj.Material = data.Material
-                obj.Color = data.Color
-                obj.CastShadow = data.CastShadow
-            elseif obj:IsA("Decal") or obj:IsA("Texture") then
-                obj.Transparency = data.Transparency
-            end
+    gfxTopBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = gfxFrame.Position
         end
-    end
-end
+    end)
 
---------------------------------------------------
--- PRESET LOGIC
---------------------------------------------------
-local function applyPreset(p)
-    if p == "Default" then
-        restoreDefaults()
-        Lighting.GlobalShadows = true
-        return
-    end
-
-    if p == "PostEffectsOff" or p == "ExtraLow" or p == "UltraLow" then
-        for _, e in ipairs(Lighting:GetChildren()) do
-            if e:IsA("PostEffect") then e.Enabled = false end
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
         end
-    end
+    end)
 
-    if p == "ShadowsOff" or p == "ExtraLow" or p == "UltraLow" then
-        Lighting.GlobalShadows = false
-        for _, part in ipairs(workspace:GetDescendants()) do
-            if part:IsA("BasePart") then part.CastShadow = false end
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - dragStart
+            gfxFrame.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
         end
-    end
-
-    if p == "DecalsOff" or p == "TexturesOff" or p == "ExtraLow" or p == "UltraLow" then
-        for _, d in ipairs(workspace:GetDescendants()) do
-            if d:IsA("Decal") or d:IsA("Texture") then d.Transparency = 1 end
-        end
-    end
-
-    if p == "SmoothPlastic" or p == "ExtraLow" or p == "UltraLow" then
-        for _, part in ipairs(workspace:GetDescendants()) do
-            if part:IsA("BasePart") then part.Material = Enum.Material.SmoothPlastic end
-        end
-    end
-
-    if p == "TerrainSimplify" or p == "ExtraLow" or p == "UltraLow" then
-        local t = workspace.Terrain
-        t.WaterWaveSize = 0
-        t.WaterWaveSpeed = 0
-        t.WaterReflectance = 0
-        t.WaterTransparency = 1
-    end
-
-    if p == "UltraLow" then
-        for _, part in ipairs(workspace:GetDescendants()) do
-            if part:IsA("BasePart") then part.Color = Color3.new(0,0,0) end
-        end
-    end
-end
-
---------------------------------------------------
--- PRESET BUTTONS
---------------------------------------------------
-for _, name in ipairs({
-    "Default","PostEffectsOff","ShadowsOff","DecalsOff",
-    "TexturesOff","SmoothPlastic","TerrainSimplify","ExtraLow","UltraLow"
-}) do
-    local b = Instance.new("TextButton")
-    b.Size = UDim2.new(1, 0, 0, 22)
-    b.BackgroundColor3 = Color3.fromRGB(40,40,40)
-    b.TextColor3 = Color3.fromRGB(255,255,255)
-    b.Text = name
-    b.Font = Enum.Font.SourceSans
-    b.TextSize = 14
-    b.Parent = presetsScroll
-
-    b.MouseButton1Click:Connect(function()
-        applyPreset(name)
-        b.BackgroundColor3 = Color3.fromRGB(0,100,0)
-        task.delay(0.25, function()
-            b.BackgroundColor3 = Color3.fromRGB(40,40,40)
-        end)
     end)
 end
 
 --------------------------------------------------
--- RIGHT: FPS CAP
+-- DROPDOWN TOGGLE (gfxFrame)
+--------------------------------------------------
+do
+    local open = true
+    local expandedSize = gfxFrame.Size
+
+    gfxToggleBtn.MouseButton1Click:Connect(function()
+        open = not open
+        if open then
+            gfxToggleBtn.Text = "▼"
+            gfxFrame:TweenSize(expandedSize, Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2, true)
+        else
+            gfxToggleBtn.Text = "▶"
+            gfxFrame:TweenSize(
+                UDim2.new(expandedSize.X.Scale, expandedSize.X.Offset, 0, 22),
+                Enum.EasingDirection.Out,
+                Enum.EasingStyle.Quad,
+                0.2,
+                true
+            )
+        end
+    end)
+end
+
+--------------------------------------------------
+-- RIGHT: FPS caps (exclusive highlight, draggable, collapsible)
 --------------------------------------------------
 local fpsFrame = Instance.new("Frame")
+fpsFrame.Name = "FPSFrame"
 fpsFrame.Size = UDim2.new(0, 125, 0, 180)
-fpsFrame.Position = UDim2.new(0, 140, 0, 5)
+fpsFrame.Position = UDim2.new(0, 135, 0, 0)
 fpsFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
-fpsFrame.BorderSizePixel = 0
-fpsFrame.Parent = content
+fpsFrame.Parent = panel
 
-local fpsCorner = Instance.new("UICorner")
-fpsCorner.CornerRadius = UDim.new(0, 6)
-fpsCorner.Parent = fpsFrame
+-- Top bar for dragging + toggle
+local fpsTopBar = Instance.new("Frame")
+fpsTopBar.Name = "TopBar"
+fpsTopBar.Size = UDim2.new(1, 0, 0, 22)
+fpsTopBar.BackgroundColor3 = Color3.fromRGB(30,30,30)
+fpsTopBar.Parent = fpsFrame
 
 local fpsHeader = Instance.new("TextLabel")
-fpsHeader.Size = UDim2.new(1, 0, 0, 22)
+fpsHeader.Size = UDim2.new(1, -22, 1, 0)
+fpsHeader.Position = UDim2.new(0, 0, 0, 0)
 fpsHeader.BackgroundTransparency = 1
-fpsHeader.Text = "FPS Cap"
 fpsHeader.TextColor3 = Color3.fromRGB(255,255,255)
+fpsHeader.Text = "FPS Cap"
 fpsHeader.Font = Enum.Font.SourceSansBold
 fpsHeader.TextSize = 16
-fpsHeader.Parent = fpsFrame
+fpsHeader.Parent = fpsTopBar
+
+local fpsToggleBtn = Instance.new("TextButton")
+fpsToggleBtn.Size = UDim2.new(0, 22, 1, 0)
+fpsToggleBtn.Position = UDim2.new(1, -22, 0, 0)
+fpsToggleBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+fpsToggleBtn.TextColor3 = Color3.fromRGB(255,255,255)
+fpsToggleBtn.Text = "▼"
+fpsToggleBtn.Font = Enum.Font.SourceSansBold
+fpsToggleBtn.TextSize = 16
+fpsToggleBtn.Parent = fpsTopBar
 
 local fpsList = Instance.new("Frame")
 fpsList.Size = UDim2.new(1, -6, 1, -26)
@@ -295,46 +153,63 @@ fpsList.BackgroundTransparency = 1
 fpsList.Parent = fpsFrame
 
 local fpsLayout = Instance.new("UIListLayout")
-fpsLayout.Padding = UDim.new(0, 4)
 fpsLayout.Parent = fpsList
+fpsLayout.Padding = UDim.new(0, 4)
 
-local function findCapper()
-    local g = (getgenv and getgenv()) or {}
-    return g.setfpscap or _G.setfpscap or setfpscap or (syn and syn.setfpscap)
+--------------------------------------------------
+-- PANEL DRAGGING (fpsFrame)
+--------------------------------------------------
+do
+    local dragging, dragStart, startPos
+
+    fpsTopBar.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            dragStart = input.Position
+            startPos = fpsFrame.Position
+        end
+    end)
+
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - dragStart
+            fpsFrame.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
 end
 
-local cap = findCapper()
-local fpsButtons = {}
+--------------------------------------------------
+-- DROPDOWN TOGGLE (fpsFrame)
+--------------------------------------------------
+do
+    local open = true
+    local expandedSize = fpsFrame.Size
 
-local function highlight(btn)
-    for _, b in ipairs(fpsButtons) do
-        b.BackgroundColor3 = Color3.fromRGB(40,40,40)
-    end
-    btn.BackgroundColor3 = Color3.fromRGB(0,100,0)
-end
-
-for _, v in ipairs({20,25,30,40,50,60,"Unlimited"}) do
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 22)
-    btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
-    btn.TextColor3 = Color3.fromRGB(255,255,255)
-    btn.Text = tostring(v)
-    btn.Font = Enum.Font.SourceSans
-    btn.TextSize = 14
-    btn.Parent = fpsList
-    table.insert(fpsButtons, btn)
-
-    btn.MouseButton1Click:Connect(function()
-        if cap then
-            cap(v == "Unlimited" and 1000 or v)
-            highlight(btn)
+    fpsToggleBtn.MouseButton1Click:Connect(function()
+        open = not open
+        if open then
+            fpsToggleBtn.Text = "▼"
+            fpsFrame:TweenSize(expandedSize, Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2, true)
         else
-            btn.Text = "No API"
-            btn.BackgroundColor3 = Color3.fromRGB(100,0,0)
-            task.delay(0.6, function()
-                btn.Text = tostring(v)
-                btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
-            end)
+            fpsToggleBtn.Text = "▶"
+            fpsFrame:TweenSize(
+                UDim2.new(expandedSize.X.Scale, expandedSize.X.Offset, 0, 22),
+                Enum.EasingDirection.Out,
+                Enum.EasingStyle.Quad,
+                0.2,
+                true
+            )
         end
     end)
 end
