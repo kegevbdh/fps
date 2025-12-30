@@ -31,6 +31,7 @@ local topBar = Instance.new("Frame")
 topBar.Size = UDim2.new(1, 0, 0, 26)
 topBar.BackgroundColor3 = Color3.fromRGB(25,25,25)
 topBar.BorderSizePixel = 0
+topBar.Active = true -- REQUIRED FOR INPUT
 topBar.Parent = panel
 
 local topCorner = Instance.new("UICorner")
@@ -38,7 +39,7 @@ topCorner.CornerRadius = UDim.new(0, 8)
 topCorner.Parent = topBar
 
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, -30, 1, 0)
+title.Size = UDim2.new(1, -32, 1, 0)
 title.Position = UDim2.new(0, 8, 0, 0)
 title.BackgroundTransparency = 1
 title.Text = "FPS / Graphics"
@@ -52,10 +53,10 @@ local toggleBtn = Instance.new("TextButton")
 toggleBtn.Size = UDim2.new(0, 24, 0, 24)
 toggleBtn.Position = UDim2.new(1, -26, 0, 1)
 toggleBtn.BackgroundTransparency = 1
-toggleBtn.Text = "–"
+toggleBtn.Text = "▼"
 toggleBtn.TextColor3 = Color3.fromRGB(255,255,255)
 toggleBtn.Font = Enum.Font.SourceSansBold
-toggleBtn.TextSize = 20
+toggleBtn.TextSize = 18
 toggleBtn.Parent = topBar
 
 --------------------------------------------------
@@ -65,54 +66,58 @@ local content = Instance.new("Frame")
 content.Position = UDim2.new(0, 0, 0, 26)
 content.Size = UDim2.new(1, 0, 1, -26)
 content.BackgroundTransparency = 1
+content.ClipsDescendants = true
 content.Parent = panel
 
 --------------------------------------------------
--- DRAG LOGIC
+-- DRAG LOGIC (FIXED)
 --------------------------------------------------
-local dragging, dragStart, startPos
+local dragging = false
+local dragStart
+local startPos
 
 topBar.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        dragStart = input.Position
-        startPos = panel.Position
-    end
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true
+		dragStart = input.Position
+		startPos = panel.Position
+	end
 end)
 
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = false
-    end
+topBar.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = false
+	end
 end)
 
 UserInputService.InputChanged:Connect(function(input)
-    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = input.Position - dragStart
-        panel.Position = UDim2.new(
-            startPos.X.Scale,
-            startPos.X.Offset + delta.X,
-            startPos.Y.Scale,
-            startPos.Y.Offset + delta.Y
-        )
-    end
+	if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+		local delta = input.Position - dragStart
+		panel.Position = UDim2.new(
+			startPos.X.Scale,
+			startPos.X.Offset + delta.X,
+			startPos.Y.Scale,
+			startPos.Y.Offset + delta.Y
+		)
+	end
 end)
 
 --------------------------------------------------
--- DROPDOWN LOGIC
+-- DROPDOWN LOGIC (FIXED)
 --------------------------------------------------
 local open = true
-local fullSize = panel.Size
+local expandedSize = panel.Size
 
 toggleBtn.MouseButton1Click:Connect(function()
-    open = not open
-    if open then
-        toggleBtn.Text = "–"
-        panel:TweenSize(fullSize, "Out", "Quad", 0.2, true)
-    else
-        toggleBtn.Text = "+"
-        panel:TweenSize(UDim2.new(fullSize.X.Scale, fullSize.X.Offset, 0, 26), "Out", "Quad", 0.2, true)
-    end
+	open = not open
+	if open then
+		toggleBtn.Text = "▼"
+		panel:TweenSize(expandedSize, Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2, true)
+	else
+		toggleBtn.Text = "▶"
+		panel:TweenSize(UDim2.new(expandedSize.X.Scale, expandedSize.X.Offset, 0, 26),
+			Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2, true)
+	end
 end)
 
 --------------------------------------------------
@@ -157,184 +162,88 @@ listLayout.Parent = presetsScroll
 local originalData = {}
 
 local function cacheObject(obj)
-    if obj:IsA("BasePart") then
-        originalData[obj] = {
-            Material = obj.Material,
-            Color = obj.Color,
-            CastShadow = obj.CastShadow
-        }
-    elseif obj:IsA("Decal") or obj:IsA("Texture") then
-        originalData[obj] = {
-            Transparency = obj.Transparency
-        }
-    end
+	if obj:IsA("BasePart") then
+		originalData[obj] = {
+			Material = obj.Material,
+			Color = obj.Color,
+			CastShadow = obj.CastShadow
+		}
+	elseif obj:IsA("Decal") or obj:IsA("Texture") then
+		originalData[obj] = { Transparency = obj.Transparency }
+	end
 end
 
 for _, obj in ipairs(workspace:GetDescendants()) do
-    cacheObject(obj)
+	cacheObject(obj)
 end
 
 workspace.DescendantAdded:Connect(cacheObject)
 
 local function restoreDefaults()
-    for obj, data in pairs(originalData) do
-        if obj and obj.Parent then
-            if obj:IsA("BasePart") then
-                obj.Material = data.Material
-                obj.Color = data.Color
-                obj.CastShadow = data.CastShadow
-            elseif obj:IsA("Decal") or obj:IsA("Texture") then
-                obj.Transparency = data.Transparency
-            end
-        end
-    end
+	for obj, data in pairs(originalData) do
+		if obj and obj.Parent then
+			if obj:IsA("BasePart") then
+				obj.Material = data.Material
+				obj.Color = data.Color
+				obj.CastShadow = data.CastShadow
+			elseif obj:IsA("Decal") or obj:IsA("Texture") then
+				obj.Transparency = data.Transparency
+			end
+		end
+	end
 end
 
 --------------------------------------------------
 -- PRESET LOGIC
 --------------------------------------------------
 local function applyPreset(p)
-    if p == "Default" then
-        restoreDefaults()
-        Lighting.GlobalShadows = true
-        return
-    end
+	if p == "Default" then
+		restoreDefaults()
+		Lighting.GlobalShadows = true
+		return
+	end
 
-    if p == "PostEffectsOff" or p == "ExtraLow" or p == "UltraLow" then
-        for _, e in ipairs(Lighting:GetChildren()) do
-            if e:IsA("PostEffect") then e.Enabled = false end
-        end
-    end
+	if p == "PostEffectsOff" or p == "ExtraLow" or p == "UltraLow" then
+		for _, e in ipairs(Lighting:GetChildren()) do
+			if e:IsA("PostEffect") then e.Enabled = false end
+		end
+	end
 
-    if p == "ShadowsOff" or p == "ExtraLow" or p == "UltraLow" then
-        Lighting.GlobalShadows = false
-        for _, part in ipairs(workspace:GetDescendants()) do
-            if part:IsA("BasePart") then part.CastShadow = false end
-        end
-    end
+	if p == "ShadowsOff" or p == "ExtraLow" or p == "UltraLow" then
+		Lighting.GlobalShadows = false
+		for _, part in ipairs(workspace:GetDescendants()) do
+			if part:IsA("BasePart") then part.CastShadow = false end
+		end
+	end
 
-    if p == "DecalsOff" or p == "TexturesOff" or p == "ExtraLow" or p == "UltraLow" then
-        for _, d in ipairs(workspace:GetDescendants()) do
-            if d:IsA("Decal") or d:IsA("Texture") then d.Transparency = 1 end
-        end
-    end
-
-    if p == "SmoothPlastic" or p == "ExtraLow" or p == "UltraLow" then
-        for _, part in ipairs(workspace:GetDescendants()) do
-            if part:IsA("BasePart") then part.Material = Enum.Material.SmoothPlastic end
-        end
-    end
-
-    if p == "TerrainSimplify" or p == "ExtraLow" or p == "UltraLow" then
-        local t = workspace.Terrain
-        t.WaterWaveSize = 0
-        t.WaterWaveSpeed = 0
-        t.WaterReflectance = 0
-        t.WaterTransparency = 1
-    end
-
-    if p == "UltraLow" then
-        for _, part in ipairs(workspace:GetDescendants()) do
-            if part:IsA("BasePart") then part.Color = Color3.new(0,0,0) end
-        end
-    end
+	if p == "DecalsOff" or p == "TexturesOff" or p == "ExtraLow" or p == "UltraLow" then
+		for _, d in ipairs(workspace:GetDescendants()) do
+			if d:IsA("Decal") or d:IsA("Texture") then d.Transparency = 1 end
+		end
+	end
 end
 
 --------------------------------------------------
 -- PRESET BUTTONS
 --------------------------------------------------
 for _, name in ipairs({
-    "Default","PostEffectsOff","ShadowsOff","DecalsOff",
-    "TexturesOff","SmoothPlastic","TerrainSimplify","ExtraLow","UltraLow"
+	"Default","PostEffectsOff","ShadowsOff","DecalsOff",
+	"TexturesOff","SmoothPlastic","TerrainSimplify","ExtraLow","UltraLow"
 }) do
-    local b = Instance.new("TextButton")
-    b.Size = UDim2.new(1, 0, 0, 22)
-    b.BackgroundColor3 = Color3.fromRGB(40,40,40)
-    b.TextColor3 = Color3.fromRGB(255,255,255)
-    b.Text = name
-    b.Font = Enum.Font.SourceSans
-    b.TextSize = 14
-    b.Parent = presetsScroll
+	local b = Instance.new("TextButton")
+	b.Size = UDim2.new(1, 0, 0, 22)
+	b.BackgroundColor3 = Color3.fromRGB(40,40,40)
+	b.TextColor3 = Color3.fromRGB(255,255,255)
+	b.Text = name
+	b.Font = Enum.Font.SourceSans
+	b.TextSize = 14
+	b.Parent = presetsScroll
 
-    b.MouseButton1Click:Connect(function()
-        applyPreset(name)
-        b.BackgroundColor3 = Color3.fromRGB(0,100,0)
-        task.delay(0.25, function()
-            b.BackgroundColor3 = Color3.fromRGB(40,40,40)
-        end)
-    end)
-end
-
---------------------------------------------------
--- RIGHT: FPS CAP
---------------------------------------------------
-local fpsFrame = Instance.new("Frame")
-fpsFrame.Size = UDim2.new(0, 125, 0, 180)
-fpsFrame.Position = UDim2.new(0, 140, 0, 5)
-fpsFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
-fpsFrame.BorderSizePixel = 0
-fpsFrame.Parent = content
-
-local fpsCorner = Instance.new("UICorner")
-fpsCorner.CornerRadius = UDim.new(0, 6)
-fpsCorner.Parent = fpsFrame
-
-local fpsHeader = Instance.new("TextLabel")
-fpsHeader.Size = UDim2.new(1, 0, 0, 22)
-fpsHeader.BackgroundTransparency = 1
-fpsHeader.Text = "FPS Cap"
-fpsHeader.TextColor3 = Color3.fromRGB(255,255,255)
-fpsHeader.Font = Enum.Font.SourceSansBold
-fpsHeader.TextSize = 16
-fpsHeader.Parent = fpsFrame
-
-local fpsList = Instance.new("Frame")
-fpsList.Size = UDim2.new(1, -6, 1, -26)
-fpsList.Position = UDim2.new(0, 3, 0, 24)
-fpsList.BackgroundTransparency = 1
-fpsList.Parent = fpsFrame
-
-local fpsLayout = Instance.new("UIListLayout")
-fpsLayout.Padding = UDim.new(0, 4)
-fpsLayout.Parent = fpsList
-
-local function findCapper()
-    local g = (getgenv and getgenv()) or {}
-    return g.setfpscap or _G.setfpscap or setfpscap or (syn and syn.setfpscap)
-end
-
-local cap = findCapper()
-local fpsButtons = {}
-
-local function highlight(btn)
-    for _, b in ipairs(fpsButtons) do
-        b.BackgroundColor3 = Color3.fromRGB(40,40,40)
-    end
-    btn.BackgroundColor3 = Color3.fromRGB(0,100,0)
-end
-
-for _, v in ipairs({20,25,30,40,50,60,"Unlimited"}) do
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 22)
-    btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
-    btn.TextColor3 = Color3.fromRGB(255,255,255)
-    btn.Text = tostring(v)
-    btn.Font = Enum.Font.SourceSans
-    btn.TextSize = 14
-    btn.Parent = fpsList
-    table.insert(fpsButtons, btn)
-
-    btn.MouseButton1Click:Connect(function()
-        if cap then
-            cap(v == "Unlimited" and 1000 or v)
-            highlight(btn)
-        else
-            btn.Text = "No API"
-            btn.BackgroundColor3 = Color3.fromRGB(100,0,0)
-            task.delay(0.6, function()
-                btn.Text = tostring(v)
-                btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
-            end)
-        end
-    end)
+	b.MouseButton1Click:Connect(function()
+		applyPreset(name)
+		b.BackgroundColor3 = Color3.fromRGB(0,100,0)
+		task.delay(0.25, function()
+			b.BackgroundColor3 = Color3.fromRGB(40,40,40)
+		end)
+	end)
 end
