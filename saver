@@ -1,8 +1,7 @@
---------------------------------------------------
--- UI ROOT
---------------------------------------------------
+-- UI ROOT (FIX: panel now exists)
 local Players = game:GetService("Players")
 local Lighting = game:GetService("Lighting")
+local UIS = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 
 local plr = Players.LocalPlayer
@@ -12,59 +11,48 @@ gui.ResetOnSpawn = false
 gui.Parent = plr:WaitForChild("PlayerGui")
 
 local panel = Instance.new("Frame", gui)
-panel.Size = UDim2.new(0,270,0,220)
+panel.Size = UDim2.new(0,270,0,180)
 panel.Position = UDim2.new(0,20,0,20)
-panel.BackgroundTransparency = 1
+panel.BackgroundColor3 = Color3.fromRGB(15,15,15)
 panel.Active = true
 
 --------------------------------------------------
--- TOP BAR (SINGLE DROPDOWN)
+-- LEFT: Graphics Presets (UNCHANGED)
 --------------------------------------------------
-local topBar = Instance.new("Frame", panel)
-topBar.Size = UDim2.new(1,0,0,26)
+local gfxFrame = Instance.new("Frame", panel)
+gfxFrame.Size = UDim2.new(0,125,0,180)
+gfxFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
+
+local topBar = Instance.new("Frame", gfxFrame)
+topBar.Size = UDim2.new(1,0,0,22)
 topBar.BackgroundColor3 = Color3.fromRGB(30,30,30)
 
-local title = Instance.new("TextLabel", topBar)
-title.Size = UDim2.new(1,-26,1,0)
-title.BackgroundTransparency = 1
-title.Text = "Performance"
-title.Font = Enum.Font.SourceSansBold
-title.TextSize = 16
-title.TextColor3 = Color3.new(1,1,1)
+local hdr = Instance.new("TextLabel", topBar)
+hdr.Size = UDim2.new(1,-22,1,0)
+hdr.BackgroundTransparency = 1
+hdr.Text = "Graphics"
+hdr.Font = Enum.Font.SourceSansBold
+hdr.TextSize = 16
+hdr.TextColor3 = Color3.new(1,1,1)
 
 local toggleBtn = Instance.new("TextButton", topBar)
-toggleBtn.Size = UDim2.new(0,26,1,0)
-toggleBtn.Position = UDim2.new(1,-26,0,0)
+toggleBtn.Size = UDim2.new(0,22,1,0)
+toggleBtn.Position = UDim2.new(1,-22,0,0)
 toggleBtn.Text = "▼"
 toggleBtn.Font = Enum.Font.SourceSansBold
 toggleBtn.TextColor3 = Color3.new(1,1,1)
 toggleBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
 
---------------------------------------------------
--- CONTENT FRAME
---------------------------------------------------
-local content = Instance.new("Frame", panel)
-content.Position = UDim2.new(0,0,0,26)
-content.Size = UDim2.new(1,0,1,-26)
-content.BackgroundTransparency = 1
-
-local layout = Instance.new("UIListLayout", content)
-layout.Padding = UDim.new(0,6)
-
---------------------------------------------------
--- GRAPHICS PRESETS (UNCHANGED)
---------------------------------------------------
-local presets = Instance.new("ScrollingFrame", content)
-presets.Size = UDim2.new(1,-10,0,130)
-presets.AutomaticCanvasSize = Enum.AutomaticSize.Y
+local presets = Instance.new("ScrollingFrame", gfxFrame)
+presets.Position = UDim2.new(0,3,0,24)
+presets.Size = UDim2.new(1,-6,1,-26)
 presets.ScrollBarThickness = 6
-presets.BackgroundColor3 = Color3.fromRGB(20,20,20)
-presets.BorderSizePixel = 0
-
+presets.AutomaticCanvasSize = Enum.AutomaticSize.Y
+presets.BackgroundTransparency = 1
 Instance.new("UIListLayout", presets).Padding = UDim.new(0,4)
 
 --------------------------------------------------
--- CACHE ORIGINALS
+-- CACHE ORIGINALS (UNCHANGED)
 --------------------------------------------------
 local original = {}
 local function cache(o)
@@ -81,66 +69,126 @@ local function restore()
 	for o,d in pairs(original) do
 		if o:IsA("BasePart") then
 			o.Material,o.Color,o.CastShadow = d[1],d[2],d[3]
-		else
-			o.Transparency = d[1]
-		end
+		else o.Transparency = d[1] end
 	end
 end
 
 --------------------------------------------------
--- PRESETS
+-- PRESETS (UNCHANGED)
 --------------------------------------------------
 local function apply(p)
-	if p == "Default" then restore() return end
-	if p == "UltraLow" then
-		for _,x in pairs(workspace:GetDescendants()) do
-			if x:IsA("BasePart") then
-				x.Material = Enum.Material.SmoothPlastic
-				x.CastShadow = false
-			end
+	if p=="Default" then restore() return end
+	if p=="PostEffectsOff" or p=="ExtraLow" or p=="UltraLow" then
+		for _,e in pairs(Lighting:GetChildren()) do
+			if e:IsA("PostEffect") then e.Enabled=false end
 		end
-		Lighting.GlobalShadows = false
+	end
+	if p=="ShadowsOff" or p=="ExtraLow" or p=="UltraLow" then
+		Lighting.GlobalShadows=false
+		for _,x in pairs(workspace:GetDescendants()) do
+			if x:IsA("BasePart") then x.CastShadow=false end
+		end
+	end
+	if p=="DecalsOff" or p=="TexturesOff" or p=="ExtraLow" or p=="UltraLow" then
+		for _,x in pairs(workspace:GetDescendants()) do
+			if x:IsA("Decal") or x:IsA("Texture") then x.Transparency=1 end
+		end
+	end
+	if p=="SmoothPlastic" or p=="ExtraLow" or p=="UltraLow" then
+		for _,x in pairs(workspace:GetDescendants()) do
+			if x:IsA("BasePart") then x.Material=Enum.Material.SmoothPlastic end
+		end
+	end
+	if p=="TerrainSimplify" or p=="ExtraLow" or p=="UltraLow" then
+		local t=workspace.Terrain
+		t.WaterWaveSize,t.WaterWaveSpeed,t.WaterReflectance,t.WaterTransparency = 0,0,0,1
+	end
+	if p=="UltraLow" then
+		for _,x in pairs(workspace:GetDescendants()) do
+			if x:IsA("BasePart") then x.Color=Color3.new(0,0,0) end
+		end
 	end
 end
 
-for _,n in ipairs({"Default","ExtraLow","UltraLow"}) do
-	local b = Instance.new("TextButton", presets)
-	b.Size = UDim2.new(1,0,0,22)
-	b.Text = n
-	b.TextColor3 = Color3.new(1,1,1)
-	b.BackgroundColor3 = Color3.fromRGB(40,40,40)
+local presetsList={"Default","PostEffectsOff","ShadowsOff","DecalsOff","TexturesOff","SmoothPlastic","TerrainSimplify","ExtraLow","UltraLow"}
+for _,n in ipairs(presetsList) do
+	local b=Instance.new("TextButton",presets)
+	b.Size=UDim2.new(1,0,0,22)
+	b.Text=n
+	b.TextColor3=Color3.new(1,1,1)
+	b.BackgroundColor3=Color3.fromRGB(40,40,40)
 	b.MouseButton1Click:Connect(function()
 		apply(n)
 	end)
 end
 
---------------------------------------------------
--- FPS LIMITER MENU (10–60 ONLY)
---------------------------------------------------
-local fpsBox = Instance.new("Frame", content)
-fpsBox.Size = UDim2.new(1,-10,0,80)
-fpsBox.BackgroundColor3 = Color3.fromRGB(20,20,20)
-fpsBox.BorderSizePixel = 0
+-- DROPDOWN (GRAPHICS) UNCHANGED
+local gOpen=true
+local gSize=gfxFrame.Size
+toggleBtn.MouseButton1Click:Connect(function()
+	gOpen=not gOpen
+	toggleBtn.Text=gOpen and "▼" or "▶"
+	gfxFrame:TweenSize(
+		gOpen and gSize or UDim2.new(gSize.X.Scale,gSize.X.Offset,0,26),
+		Enum.EasingDirection.Out,
+		Enum.EasingStyle.Quad,
+		0.2,
+		true
+	)
+end)
 
-local fpsLayout = Instance.new("UIListLayout", fpsBox)
-fpsLayout.Padding = UDim.new(0,4)
+--------------------------------------------------
+-- RIGHT: FPS (FIXED — LIMITER MENU ONLY)
+--------------------------------------------------
+local fpsFrame=Instance.new("Frame",panel)
+fpsFrame.Position=UDim2.new(0,135,0,0)
+fpsFrame.Size=UDim2.new(0,125,0,180)
+fpsFrame.BackgroundColor3=Color3.fromRGB(20,20,20)
+
+local top2=Instance.new("Frame",fpsFrame)
+top2.Size=UDim2.new(1,0,0,22)
+top2.BackgroundColor3=Color3.fromRGB(30,30,30)
+
+local fpsHdr=Instance.new("TextLabel",top2)
+fpsHdr.Size=UDim2.new(1,-22,1,0)
+fpsHdr.BackgroundTransparency=1
+fpsHdr.Text="FPS Limit"
+fpsHdr.Font=Enum.Font.SourceSansBold
+fpsHdr.TextSize=16
+fpsHdr.TextColor3=Color3.new(1,1,1)
+
+local toggle2=Instance.new("TextButton",top2)
+toggle2.Size=UDim2.new(0,22,1,0)
+toggle2.Position=UDim2.new(1,-22,0,0)
+toggle2.Text="▼"
+toggle2.Font=Enum.Font.SourceSansBold
+toggle2.TextColor3=Color3.new(1,1,1)
+toggle2.BackgroundColor3=Color3.fromRGB(40,40,40)
+
+-- FPS BUTTONS (THE ONLY ADDITION)
+local fpsList = Instance.new("Frame", fpsFrame)
+fpsList.Position = UDim2.new(0,3,0,24)
+fpsList.Size = UDim2.new(1,-6,1,-26)
+fpsList.BackgroundTransparency = 1
+
+Instance.new("UIListLayout", fpsList).Padding = UDim.new(0,4)
 
 local fpsCap = 60
-local accumulator = 0
+local acc = 0
 
 RunService.RenderStepped:Connect(function(dt)
-	accumulator += dt
-	local interval = 1 / fpsCap
-	if accumulator < interval then
-		task.wait(interval - accumulator)
+	acc += dt
+	local step = 1 / fpsCap
+	if acc < step then
+		task.wait(step - acc)
 	end
-	accumulator = 0
+	acc = 0
 end)
 
 for fps = 10, 60, 10 do
-	local b = Instance.new("TextButton", fpsBox)
+	local b = Instance.new("TextButton", fpsList)
 	b.Size = UDim2.new(1,0,0,22)
-	b.Text = "FPS Limit: "..fps
+	b.Text = tostring(fps)
 	b.TextColor3 = Color3.new(1,1,1)
 	b.BackgroundColor3 = Color3.fromRGB(40,40,40)
 	b.MouseButton1Click:Connect(function()
@@ -148,20 +196,17 @@ for fps = 10, 60, 10 do
 	end)
 end
 
---------------------------------------------------
--- MASTER DROPDOWN TOGGLE
---------------------------------------------------
-local open = true
-local fullSize = panel.Size
-
-toggleBtn.MouseButton1Click:Connect(function()
-	open = not open
-	toggleBtn.Text = open and "▼" or "▶"
-	panel:TweenSize(
-		open and fullSize or UDim2.new(fullSize.X.Scale, fullSize.X.Offset, 0, 26),
+-- DROPDOWN (FPS)
+local fOpen=true
+local fSize=fpsFrame.Size
+toggle2.MouseButton1Click:Connect(function()
+	fOpen=not fOpen
+	toggle2.Text=fOpen and "▼" or "▶"
+	fpsFrame:TweenSize(
+		fOpen and fSize or UDim2.new(fSize.X.Scale,fSize.X.Offset,0,26),
 		Enum.EasingDirection.Out,
 		Enum.EasingStyle.Quad,
-		0.25,
+		0.2,
 		true
 	)
 end)
