@@ -138,34 +138,38 @@ toggle2.Font=Enum.Font.SourceSansBold
 toggle2.TextColor3=Color3.new(1,1,1)
 toggle2.BackgroundColor3=Color3.fromRGB(40,40,40)
 
--- FIXED FPS LIMITER
-local targetFPS = 60
-local lastFrame = os.clock()
+-- Executor API check
+local function findCapper()
+    local g = getgenv and getgenv() or {}
+    return g.setfpscap
+        or _G.setfpscap
+        or setfpscap
+        or (syn and (syn.set_fps or syn.setfpscap))
+end
+local cap = findCapper()
 
-RunService.RenderStepped:Connect(function()
-    local minDelta = 1 / targetFPS
-    local now = os.clock()
-    local delta = now - lastFrame
-    if delta < minDelta then
-        task.wait(minDelta - delta)
-    end
-    lastFrame = os.clock()
-end)
-
--- FPS BUTTONS
-local fpsPresets={10,20,30,40,50,60}
+-- FPS OPTIONS (10–60)
+local fpsValues = {10,20,30,40,50,60}
 local y=26
-for _,fps in ipairs(fpsPresets) do
-    local b=Instance.new("TextButton",fpsFrame)
-    b.Position=UDim2.new(0,5,0,y)
-    b.Size=UDim2.new(1,-10,0,22)
-    b.Text=tostring(fps).." FPS"
-    b.TextColor3=Color3.new(1,1,1)
-    b.BackgroundColor3=Color3.fromRGB(40,40,40)
-    b.MouseButton1Click:Connect(function()
-        targetFPS=fps -- updates limiter
+for _,v in ipairs(fpsValues) do
+    local opt = Instance.new("TextButton",fpsFrame)
+    opt.Position = UDim2.new(0,5,0,y)
+    opt.Size = UDim2.new(1,-10,0,22)
+    opt.BackgroundColor3 = Color3.fromRGB(40,40,40)
+    opt.TextColor3 = Color3.fromRGB(255,255,255)
+    opt.Text = tostring(v).." FPS"
+
+    opt.MouseButton1Click:Connect(function()
+        if cap then
+            cap(v)
+            opt.BackgroundColor3 = Color3.fromRGB(0,100,0)
+        else
+            opt.Text = "No API"
+            opt.BackgroundColor3 = Color3.fromRGB(100,0,0)
+        end
     end)
-    y=y+26
+
+    y = y + 26
 end
 
 -- DROPDOWN (FPS)
