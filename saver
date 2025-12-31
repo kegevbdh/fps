@@ -7,27 +7,41 @@ local Lighting = game:GetService("Lighting")
 local plr = Players.LocalPlayer
 
 --------------------------------------------------
--- UI ROOT
+-- UI ROOT (SINGLE PANEL FOR BOTH MENUS)
 --------------------------------------------------
 local gui = Instance.new("ScreenGui")
-gui.Name = "FPS_GUI"
+gui.Name = "FPS_GRAPHICS_GUI"
 gui.ResetOnSpawn = false
 gui.Parent = plr:WaitForChild("PlayerGui")
 
 local panel = Instance.new("Frame", gui)
-panel.Size = UDim2.new(0,270,0,180) -- panel size stays fixed
+panel.Size = UDim2.new(0,270,0,180) -- fixed size
 panel.Position = UDim2.new(0,20,0,20)
 panel.BackgroundColor3 = Color3.fromRGB(15,15,15)
 panel.Active = true
+panel.ClipsDescendants = true -- ensures no leftover black background
+
+--------------------------------------------------
+-- DROPDOWN STATE
+--------------------------------------------------
+local gfxOpen = true
+local fpsOpen = true
+local PANEL_WIDTH = 270
+local PANEL_HEIGHT = 180
+local PANEL_CLOSED_HEIGHT = 22
+
+local function updatePanelSize()
+	-- panel size stays fixed; dropdowns clip inside
+end
 
 --------------------------------------------------
 -- LEFT: GRAPHICS FRAME
 --------------------------------------------------
 local gfxFrame = Instance.new("Frame", panel)
 gfxFrame.Position = UDim2.new(0,0,0,0)
-gfxFrame.Size = UDim2.new(0,125,0,180)
+gfxFrame.Size = UDim2.new(0,135,0,180)
 gfxFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
-gfxFrame.ClipsDescendants = true -- prevents leftover background
+gfxFrame.ClipsDescendants = true
 
 local topBar = Instance.new("Frame", gfxFrame)
 topBar.Size = UDim2.new(1,0,0,22)
@@ -50,7 +64,7 @@ toggleBtnLeft.TextColor3 = Color3.new(1,1,1)
 toggleBtnLeft.BackgroundColor3 = Color3.fromRGB(40,40,40)
 
 --------------------------------------------------
--- GRAPHICS PRESETS
+-- GRAPHICS PRESETS SCROLLING FRAME
 --------------------------------------------------
 local presets = Instance.new("ScrollingFrame", gfxFrame)
 presets.Position = UDim2.new(0,3,0,24)
@@ -78,7 +92,6 @@ end
 for _,o in ipairs(workspace:GetDescendants()) do
 	cache(o)
 end
-
 workspace.DescendantAdded:Connect(cache)
 
 local function restore()
@@ -94,7 +107,7 @@ local function restore()
 end
 
 --------------------------------------------------
--- APPLY PRESET FUNCTION
+-- APPLY GRAPHICS PRESET FUNCTION
 --------------------------------------------------
 local function applyPreset(p)
 	if p == "Default" then restore() return end
@@ -126,7 +139,7 @@ local function applyPreset(p)
 end
 
 --------------------------------------------------
--- CREATE PRESET BUTTONS
+-- CREATE GRAPHICS PRESET BUTTONS
 --------------------------------------------------
 local presetNames = {
 	"Default","PostEffectsOff","ShadowsOff","DecalsOff","TexturesOff","SmoothPlastic","TerrainSimplify","ExtraLow","UltraLow"
@@ -144,34 +157,13 @@ for _,name in ipairs(presetNames) do
 end
 
 --------------------------------------------------
--- GRAPHICS DROPDOWN LOGIC (SELF-CONTAINED)
---------------------------------------------------
-local OPEN_SIZE = UDim2.new(0,125,0,180)
-local CLOSED_SIZE = UDim2.new(0,125,0,22)
-gfxFrame.Size = OPEN_SIZE
-
-toggleBtnLeft.MouseButton1Click:Connect(function()
-	gfxOpen = not gfxOpen
-	toggleBtnLeft.Text = gfxOpen and "▼" or "▶"
-
-	-- only resize the graphics frame itself
-	gfxFrame:TweenSize(
-		gfxOpen and OPEN_SIZE or CLOSED_SIZE,
-		Enum.EasingDirection.Out,
-		Enum.EasingStyle.Quad,
-		0.2,
-		true
-	)
-end)
-
---------------------------------------------------
--- RIGHT: FPS FRAME
+-- RIGHT: FPS FRAME (SAME PANEL)
 --------------------------------------------------
 local fpsFrame = Instance.new("Frame", panel)
 fpsFrame.Position = UDim2.new(0,135,0,0)
-fpsFrame.Size = UDim2.new(0,125,0,180)
+fpsFrame.Size = UDim2.new(0,135,0,180)
 fpsFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
-fpsFrame.ClipsDescendants = true -- prevents leftover background
+fpsFrame.ClipsDescendants = true
 
 local topBarFPS = Instance.new("Frame", fpsFrame)
 topBarFPS.Size = UDim2.new(1,0,0,22)
@@ -211,13 +203,13 @@ local setCap = findCapper()
 --------------------------------------------------
 local fpsValues = {10,20,30,40,50,60}
 local fpsButtons = {}
-
 local y = 26
+
 for _,v in ipairs(fpsValues) do
 	local btn = Instance.new("TextButton", fpsFrame)
 	btn.Position = UDim2.new(0,5,0,y)
 	btn.Size = UDim2.new(1,-10,0,22)
-	btn.Text = v .. " FPS"
+	btn.Text = v.." FPS"
 	btn.Font = Enum.Font.SourceSans
 	btn.TextSize = 14
 	btn.TextColor3 = Color3.new(1,1,1)
@@ -231,7 +223,7 @@ for _,v in ipairs(fpsValues) do
 			b.BackgroundColor3 = Color3.fromRGB(40,40,40)
 		end
 
-		-- apply cap
+		-- apply FPS cap
 		if setCap then
 			setCap(v)
 			btn.BackgroundColor3 = Color3.fromRGB(0,120,0)
@@ -245,17 +237,30 @@ for _,v in ipairs(fpsValues) do
 end
 
 --------------------------------------------------
--- FPS DROPDOWN LOGIC (SELF-CONTAINED)
+-- DROPDOWN LOGIC FOR BOTH FRAMES
 --------------------------------------------------
-local OPEN_SIZE = UDim2.new(0,125,0,180)
-local CLOSED_SIZE = UDim2.new(0,125,0,22)
-fpsFrame.Size = OPEN_SIZE
+local OPEN_SIZE = UDim2.new(0,135,0,180)
+local CLOSED_SIZE = UDim2.new(0,135,0,22)
 
+-- Graphics toggle
+toggleBtnLeft.MouseButton1Click:Connect(function()
+	gfxOpen = not gfxOpen
+	toggleBtnLeft.Text = gfxOpen and "▼" or "▶"
+
+	gfxFrame:TweenSize(
+		gfxOpen and OPEN_SIZE or CLOSED_SIZE,
+		Enum.EasingDirection.Out,
+		Enum.EasingStyle.Quad,
+		0.2,
+		true
+	)
+end)
+
+-- FPS toggle
 toggleBtnRight.MouseButton1Click:Connect(function()
 	fpsOpen = not fpsOpen
 	toggleBtnRight.Text = fpsOpen and "▼" or "▶"
 
-	-- only resize the fps frame itself
 	fpsFrame:TweenSize(
 		fpsOpen and OPEN_SIZE or CLOSED_SIZE,
 		Enum.EasingDirection.Out,
