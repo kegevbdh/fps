@@ -1,13 +1,15 @@
+--------------------------------------------------
+-- LEFT: Graphics Presets (FULL, FIXED)
+--------------------------------------------------
+
 -- SERVICES
 local Players = game:GetService("Players")
 local Lighting = game:GetService("Lighting")
-local UIS = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
 
 local plr = Players.LocalPlayer
 
 --------------------------------------------------
--- UI ROOT (unchanged)
+-- UI ROOT
 --------------------------------------------------
 local gui = Instance.new("ScreenGui")
 gui.Name = "FPS_GUI"
@@ -20,13 +22,19 @@ panel.Position = UDim2.new(0,20,0,20)
 panel.BackgroundColor3 = Color3.fromRGB(15,15,15)
 panel.Active = true
 
--- LEFT: Graphics Presets
+--------------------------------------------------
+-- GRAPHICS FRAME
+--------------------------------------------------
 local gfxFrame = Instance.new("Frame", panel)
 gfxFrame.Size = UDim2.new(0,125,0,180)
+gfxFrame.Position = UDim2.new(0,0,0,0)
 gfxFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
+gfxFrame.ClipsDescendants = true -- IMPORTANT: prevents black overlay
+
 local topBar = Instance.new("Frame", gfxFrame)
 topBar.Size = UDim2.new(1,0,0,22)
 topBar.BackgroundColor3 = Color3.fromRGB(30,30,30)
+
 local hdr = Instance.new("TextLabel", topBar)
 hdr.Size = UDim2.new(1,-22,1,0)
 hdr.BackgroundTransparency = 1
@@ -34,6 +42,7 @@ hdr.Text = "Graphics"
 hdr.Font = Enum.Font.SourceSansBold
 hdr.TextSize = 16
 hdr.TextColor3 = Color3.new(1,1,1)
+
 local toggleBtn = Instance.new("TextButton", topBar)
 toggleBtn.Size = UDim2.new(0,22,1,0)
 toggleBtn.Position = UDim2.new(1,-22,0,0)
@@ -41,152 +50,258 @@ toggleBtn.Text = "▼"
 toggleBtn.Font = Enum.Font.SourceSansBold
 toggleBtn.TextColor3 = Color3.new(1,1,1)
 toggleBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+
+--------------------------------------------------
+-- PRESETS LIST
+--------------------------------------------------
 local presets = Instance.new("ScrollingFrame", gfxFrame)
 presets.Position = UDim2.new(0,3,0,24)
 presets.Size = UDim2.new(1,-6,1,-26)
 presets.ScrollBarThickness = 6
 presets.AutomaticCanvasSize = Enum.AutomaticSize.Y
+presets.CanvasSize = UDim2.new(0,0,0,0)
 presets.BackgroundTransparency = 1
-Instance.new("UIListLayout", presets).Padding = UDim.new(0,4)
 
--- CACHE ORIGINALS
+local layout = Instance.new("UIListLayout", presets)
+layout.Padding = UDim.new(0,4)
+
+--------------------------------------------------
+-- CACHE ORIGINAL WORLD STATE
+--------------------------------------------------
 local original = {}
+
 local function cache(o)
-	if o:IsA("BasePart") then original[o] = {o.Material,o.Color,o.CastShadow} 
-	elseif o:IsA("Decal") or o:IsA("Texture") then original[o] = {o.Transparency} 
+	if o:IsA("BasePart") then
+		original[o] = {o.Material, o.Color, o.CastShadow}
+	elseif o:IsA("Decal") or o:IsA("Texture") then
+		original[o] = {o.Transparency}
 	end
 end
-for _,o in pairs(workspace:GetDescendants()) do cache(o) end
+
+for _,o in ipairs(workspace:GetDescendants()) do
+	cache(o)
+end
+
 workspace.DescendantAdded:Connect(cache)
+
 local function restore()
 	for o,d in pairs(original) do
-		if o:IsA("BasePart") then o.Material,o.Color,o.CastShadow = d[1],d[2],d[3] 
-		else o.Transparency = d[1] 
+		if o:IsA("BasePart") then
+			o.Material = d[1]
+			o.Color = d[2]
+			o.CastShadow = d[3]
+		elseif o:IsA("Decal") or o:IsA("Texture") then
+			o.Transparency = d[1]
 		end
 	end
 end
 
--- PRESETS
-local function apply(p)
-	if p=="Default" then restore() return end
-	if p=="PostEffectsOff" or p=="ExtraLow" or p=="UltraLow" then
-		for _,e in pairs(Lighting:GetChildren()) do if e:IsA("PostEffect") then e.Enabled=false end end
+--------------------------------------------------
+-- APPLY PRESET
+--------------------------------------------------
+local function applyPreset(p)
+	if p == "Default" then
+		restore()
+		return
 	end
-	if p=="ShadowsOff" or p=="ExtraLow" or p=="UltraLow" then
-		Lighting.GlobalShadows=false
-		for _,x in pairs(workspace:GetDescendants()) do if x:IsA("BasePart") then x.CastShadow=false end end
+
+	if p == "PostEffectsOff" or p == "ExtraLow" or p == "UltraLow" then
+		for _,e in ipairs(Lighting:GetChildren()) do
+			if e:IsA("PostEffect") then
+				e.Enabled = false
+			end
+		end
 	end
-	if p=="DecalsOff" or p=="TexturesOff" or p=="ExtraLow" or p=="UltraLow" then
-		for _,x in pairs(workspace:GetDescendants()) do if x:IsA("Decal") or x:IsA("Texture") then x.Transparency=1 end end
+
+	if p == "ShadowsOff" or p == "ExtraLow" or p == "UltraLow" then
+		Lighting.GlobalShadows = false
+		for _,x in ipairs(workspace:GetDescendants()) do
+			if x:IsA("BasePart") then
+				x.CastShadow = false
+			end
+		end
 	end
-	if p=="SmoothPlastic" or p=="ExtraLow" or p=="UltraLow" then
-		for _,x in pairs(workspace:GetDescendants()) do if x:IsA("BasePart") then x.Material=Enum.Material.SmoothPlastic end end
+
+	if p == "DecalsOff" or p == "TexturesOff" or p == "ExtraLow" or p == "UltraLow" then
+		for _,x in ipairs(workspace:GetDescendants()) do
+			if x:IsA("Decal") or x:IsA("Texture") then
+				x.Transparency = 1
+			end
+		end
 	end
-	if p=="TerrainSimplify" or p=="ExtraLow" or p=="UltraLow" then
-		local t=workspace:FindFirstChild("Terrain")
-		if t then t.WaterWaveSize,t.WaterWaveSpeed,t.WaterReflectance,t.WaterTransparency = 0,0,0,1 end
+
+	if p == "SmoothPlastic" or p == "ExtraLow" or p == "UltraLow" then
+		for _,x in ipairs(workspace:GetDescendants()) do
+			if x:IsA("BasePart") then
+				x.Material = Enum.Material.SmoothPlastic
+			end
+		end
 	end
-	if p=="UltraLow" then
-		for _,x in pairs(workspace:GetDescendants()) do if x:IsA("BasePart") then x.Color=Color3.new(0,0,0) end end
+
+	if p == "TerrainSimplify" or p == "ExtraLow" or p == "UltraLow" then
+		local t = workspace:FindFirstChild("Terrain")
+		if t then
+			t.WaterWaveSize = 0
+			t.WaterWaveSpeed = 0
+			t.WaterReflectance = 0
+			t.WaterTransparency = 1
+		end
+	end
+
+	if p == "UltraLow" then
+		for _,x in ipairs(workspace:GetDescendants()) do
+			if x:IsA("BasePart") then
+				x.Color = Color3.new(0,0,0)
+			end
+		end
 	end
 end
 
-local presetsList={"Default","PostEffectsOff","ShadowsOff","DecalsOff","TexturesOff","SmoothPlastic","TerrainSimplify","ExtraLow","UltraLow"}
-for _,n in ipairs(presetsList) do
-	local b=Instance.new("TextButton",presets)
-	b.Size=UDim2.new(1,0,0,22)
-	b.Text=n
-	b.TextColor3=Color3.new(1,1,1)
-	b.BackgroundColor3=Color3.fromRGB(40,40,40)
-	b.MouseButton1Click:Connect(function() apply(n) end)
+--------------------------------------------------
+-- PRESET BUTTONS
+--------------------------------------------------
+local presetNames = {
+	"Default",
+	"PostEffectsOff",
+	"ShadowsOff",
+	"DecalsOff",
+	"TexturesOff",
+	"SmoothPlastic",
+	"TerrainSimplify",
+	"ExtraLow",
+	"UltraLow"
+}
+
+for _,name in ipairs(presetNames) do
+	local btn = Instance.new("TextButton", presets)
+	btn.Size = UDim2.new(1,0,0,22)
+	btn.Text = name
+	btn.TextColor3 = Color3.new(1,1,1)
+	btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+
+	btn.MouseButton1Click:Connect(function()
+		applyPreset(name)
+	end)
 end
 
--- DROPDOWN (GRAPHICS)
-local gOpen=true
-local gSize=gfxFrame.Size
+--------------------------------------------------
+-- DROPDOWN LOGIC (FIXED)
+--------------------------------------------------
+local OPEN_SIZE = UDim2.new(0,125,0,180)
+local CLOSED_SIZE = UDim2.new(0,125,0,22)
+local open = true
+
 toggleBtn.MouseButton1Click:Connect(function()
-	gOpen=not gOpen
-	toggleBtn.Text=gOpen and "▼" or "▶"
-	gfxFrame:TweenSize(gOpen and gSize or UDim2.new(gSize.X.Scale,gSize.X.Offset,0,26), Enum.EasingDirection.Out,Enum.EasingStyle.Quad,0.2,true)
+	open = not open
+	toggleBtn.Text = open and "▼" or "▶"
+	gfxFrame:TweenSize(
+		open and OPEN_SIZE or CLOSED_SIZE,
+		Enum.EasingDirection.Out,
+		Enum.EasingStyle.Quad,
+		0.2,
+		true
+	)
 end)
 
 --------------------------------------------------
--- RIGHT: FPS
+-- RIGHT: FPS PANEL (FULL, FIXED)
 --------------------------------------------------
-local fpsFrame=Instance.new("Frame",panel)
-fpsFrame.Position=UDim2.new(0,135,0,0)
-fpsFrame.Size=UDim2.new(0,125,0,180)
-fpsFrame.BackgroundColor3=Color3.fromRGB(20,20,20)
 
-local top2=Instance.new("Frame",fpsFrame)
-top2.Size=UDim2.new(1,0,0,22)
-top2.BackgroundColor3=Color3.fromRGB(30,30,30)
+--------------------------------------------------
+-- FPS FRAME
+--------------------------------------------------
+local fpsFrame = Instance.new("Frame", panel)
+fpsFrame.Position = UDim2.new(0,135,0,0)
+fpsFrame.Size = UDim2.new(0,125,0,180)
+fpsFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
+fpsFrame.ClipsDescendants = true -- IMPORTANT
 
-local fpsHdr=Instance.new("TextLabel",top2)
-fpsHdr.Size=UDim2.new(1,-22,1,0)
-fpsHdr.BackgroundTransparency=1
-fpsHdr.Text="FPS"
-fpsHdr.Font=Enum.Font.SourceSansBold
-fpsHdr.TextSize=16
-fpsHdr.TextColor3=Color3.new(1,1,1)
+local topBar = Instance.new("Frame", fpsFrame)
+topBar.Size = UDim2.new(1,0,0,22)
+topBar.BackgroundColor3 = Color3.fromRGB(30,30,30)
 
-local toggle2=Instance.new("TextButton",top2)
-toggle2.Size=UDim2.new(0,22,1,0)
-toggle2.Position=UDim2.new(1,-22,0,0)
-toggle2.Text="▼"
-toggle2.Font=Enum.Font.SourceSansBold
-toggle2.TextColor3=Color3.new(1,1,1)
-toggle2.BackgroundColor3=Color3.fromRGB(40,40,40)
+local hdr = Instance.new("TextLabel", topBar)
+hdr.Size = UDim2.new(1,-22,1,0)
+hdr.BackgroundTransparency = 1
+hdr.Text = "FPS"
+hdr.Font = Enum.Font.SourceSansBold
+hdr.TextSize = 16
+hdr.TextColor3 = Color3.new(1,1,1)
 
--- Find Delta's setfpscap
+local toggleBtn = Instance.new("TextButton", topBar)
+toggleBtn.Size = UDim2.new(0,22,1,0)
+toggleBtn.Position = UDim2.new(1,-22,0,0)
+toggleBtn.Text = "▼"
+toggleBtn.Font = Enum.Font.SourceSansBold
+toggleBtn.TextColor3 = Color3.new(1,1,1)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+
+--------------------------------------------------
+-- FIND FPS CAPPER (DELTA / SYN / GLOBAL)
+--------------------------------------------------
 local function findCapper()
-    local g = getgenv and getgenv() or {}
-    return g.setfpscap
-        or _G.setfpscap
-        or setfpscap
-        or (syn and (syn.set_fps or syn.setfpscap))
+	local g = getgenv and getgenv() or {}
+	return g.setfpscap
+		or _G.setfpscap
+		or setfpscap
+		or (syn and (syn.set_fps or syn.setfpscap))
 end
-local cap = findCapper()
 
--- FPS OPTIONS (10–60)
+local setCap = findCapper()
+
+--------------------------------------------------
+-- FPS OPTIONS
+--------------------------------------------------
 local fpsValues = {10,20,30,40,50,60}
-local y=26
-local fpsButtons = {}  -- store all buttons
+local fpsButtons = {}
 
+local y = 26
 for _,v in ipairs(fpsValues) do
-    local opt = Instance.new("TextButton",fpsFrame)
-    opt.Position = UDim2.new(0,5,0,y)
-    opt.Size = UDim2.new(1,-10,0,22)
-    opt.BackgroundColor3 = Color3.fromRGB(40,40,40)
-    opt.TextColor3 = Color3.fromRGB(255,255,255)
-    opt.Text = tostring(v).." FPS"
+	local btn = Instance.new("TextButton", fpsFrame)
+	btn.Position = UDim2.new(0,5,0,y)
+	btn.Size = UDim2.new(1,-10,0,22)
+	btn.Text = v .. " FPS"
+	btn.Font = Enum.Font.SourceSans
+	btn.TextSize = 14
+	btn.TextColor3 = Color3.new(1,1,1)
+	btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
 
-    table.insert(fpsButtons,opt)
+	table.insert(fpsButtons, btn)
 
-    opt.MouseButton1Click:Connect(function()
-        -- reset all buttons to gray first
-        for _,btn in ipairs(fpsButtons) do
-            btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
-        end
-        -- apply FPS cap
-        if cap then
-            cap(v)
-            opt.BackgroundColor3 = Color3.fromRGB(0,100,0)
-        else
-            opt.Text = "No API"
-            opt.BackgroundColor3 = Color3.fromRGB(100,0,0)
-        end
-    end)
+	btn.MouseButton1Click:Connect(function()
+		-- Reset all buttons
+		for _,b in ipairs(fpsButtons) do
+			b.BackgroundColor3 = Color3.fromRGB(40,40,40)
+		end
 
-    y = y + 26
+		-- Apply FPS cap
+		if setCap then
+			setCap(v)
+			btn.BackgroundColor3 = Color3.fromRGB(0,120,0) -- selected
+		else
+			btn.Text = "No API"
+			btn.BackgroundColor3 = Color3.fromRGB(120,0,0)
+		end
+	end)
+
+	y += 26
 end
 
--- DROPDOWN (FPS)
-local fOpen = true
-local fSize = fpsFrame.Size
-toggle2.MouseButton1Click:Connect(function()
-    fOpen = not fOpen
-    toggle2.Text = fOpen and "▼" or "▶"
-    fpsFrame:TweenSize(fOpen and fSize or UDim2.new(fSize.X.Scale,fSize.X.Offset,0,26),
-        Enum.EasingDirection.Out,Enum.EasingStyle.Quad,0.2,true)
+--------------------------------------------------
+-- DROPDOWN LOGIC (FIXED)
+--------------------------------------------------
+local OPEN_SIZE = UDim2.new(0,125,0,180)
+local CLOSED_SIZE = UDim2.new(0,125,0,22)
+local open = true
+
+toggleBtn.MouseButton1Click:Connect(function()
+	open = not open
+	toggleBtn.Text = open and "▼" or "▶"
+	fpsFrame:TweenSize(
+		open and OPEN_SIZE or CLOSED_SIZE,
+		Enum.EasingDirection.Out,
+		Enum.EasingStyle.Quad,
+		0.2,
+		true
+	)
 end)
