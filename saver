@@ -151,7 +151,7 @@ local cap = findCapper()
 -- FPS OPTIONS (10–60)
 local fpsValues = {10,20,30,40,50,60}
 local y=26
-local fpsButtons = {}
+local fpsButtons = {}  -- store all buttons
 
 for _,v in ipairs(fpsValues) do
     local opt = Instance.new("TextButton",fpsFrame)
@@ -161,11 +161,11 @@ for _,v in ipairs(fpsValues) do
     opt.TextColor3 = Color3.fromRGB(255,255,255)
     opt.Text = tostring(v).." FPS"
 
-    fpsButtons[v] = opt
+    table.insert(fpsButtons,opt)
 
     opt.MouseButton1Click:Connect(function()
-        -- reset all buttons to gray
-        for _,btn in pairs(fpsButtons) do
+        -- reset all buttons to gray first
+        for _,btn in ipairs(fpsButtons) do
             btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
         end
         -- apply FPS cap
