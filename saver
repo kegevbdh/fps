@@ -15,40 +15,10 @@ gui.ResetOnSpawn = false
 gui.Parent = plr:WaitForChild("PlayerGui")
 
 local panel = Instance.new("Frame", gui)
-panel.Size = UDim2.new(0,270,0,180)
+panel.Size = UDim2.new(0,270,0,180) -- panel size stays fixed
 panel.Position = UDim2.new(0,20,0,20)
 panel.BackgroundColor3 = Color3.fromRGB(15,15,15)
 panel.Active = true
-panel.ClipsDescendants = true -- removes black background leftovers
-
---------------------------------------------------
--- SHARED DROPDOWN STATE (USED BY RIGHT SIDE TOO)
---------------------------------------------------
-local PANEL_OPEN_HEIGHT = 180
-local PANEL_CLOSED_HEIGHT = 22
-
-local gfxOpen = true
-local fpsOpen = true -- will be controlled by right side later
-
-local function updatePanelSize()
-	if gfxOpen or fpsOpen then
-		panel:TweenSize(
-			UDim2.new(0,270,0,PANEL_OPEN_HEIGHT),
-			Enum.EasingDirection.Out,
-			Enum.EasingStyle.Quad,
-			0.2,
-			true
-		)
-	else
-		panel:TweenSize(
-			UDim2.new(0,270,0,PANEL_CLOSED_HEIGHT),
-			Enum.EasingDirection.Out,
-			Enum.EasingStyle.Quad,
-			0.2,
-			true
-		)
-	end
-end
 
 --------------------------------------------------
 -- LEFT: GRAPHICS FRAME
@@ -57,7 +27,7 @@ local gfxFrame = Instance.new("Frame", panel)
 gfxFrame.Position = UDim2.new(0,0,0,0)
 gfxFrame.Size = UDim2.new(0,125,0,180)
 gfxFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
-gfxFrame.ClipsDescendants = true
+gfxFrame.ClipsDescendants = true -- prevents leftover background
 
 local topBar = Instance.new("Frame", gfxFrame)
 topBar.Size = UDim2.new(1,0,0,22)
@@ -80,15 +50,15 @@ toggleBtnLeft.TextColor3 = Color3.new(1,1,1)
 toggleBtnLeft.BackgroundColor3 = Color3.fromRGB(40,40,40)
 
 --------------------------------------------------
--- GRAPHICS PRESET LIST
+-- GRAPHICS PRESETS
 --------------------------------------------------
 local presets = Instance.new("ScrollingFrame", gfxFrame)
 presets.Position = UDim2.new(0,3,0,24)
 presets.Size = UDim2.new(1,-6,1,-26)
+presets.BackgroundTransparency = 1
 presets.ScrollBarThickness = 6
 presets.AutomaticCanvasSize = Enum.AutomaticSize.Y
-presets.CanvasSize = UDim2.new(0,0,0,0)
-presets.BackgroundTransparency = 1
+presets.ClipsDescendants = true
 
 local layout = Instance.new("UIListLayout", presets)
 layout.Padding = UDim.new(0,4)
@@ -97,7 +67,6 @@ layout.Padding = UDim.new(0,4)
 -- CACHE ORIGINAL WORLD STATE
 --------------------------------------------------
 local original = {}
-
 local function cache(o)
 	if o:IsA("BasePart") then
 		original[o] = {o.Material, o.Color, o.CastShadow}
@@ -125,47 +94,23 @@ local function restore()
 end
 
 --------------------------------------------------
--- APPLY GRAPHICS PRESET
+-- APPLY PRESET FUNCTION
 --------------------------------------------------
 local function applyPreset(p)
-	if p == "Default" then
-		restore()
-		return
-	end
-
+	if p == "Default" then restore() return end
 	if p == "PostEffectsOff" or p == "ExtraLow" or p == "UltraLow" then
-		for _,e in ipairs(Lighting:GetChildren()) do
-			if e:IsA("PostEffect") then
-				e.Enabled = false
-			end
-		end
+		for _,e in ipairs(Lighting:GetChildren()) do if e:IsA("PostEffect") then e.Enabled = false end end
 	end
-
 	if p == "ShadowsOff" or p == "ExtraLow" or p == "UltraLow" then
 		Lighting.GlobalShadows = false
-		for _,x in ipairs(workspace:GetDescendants()) do
-			if x:IsA("BasePart") then
-				x.CastShadow = false
-			end
-		end
+		for _,x in ipairs(workspace:GetDescendants()) do if x:IsA("BasePart") then x.CastShadow = false end end
 	end
-
 	if p == "DecalsOff" or p == "TexturesOff" or p == "ExtraLow" or p == "UltraLow" then
-		for _,x in ipairs(workspace:GetDescendants()) do
-			if x:IsA("Decal") or x:IsA("Texture") then
-				x.Transparency = 1
-			end
-		end
+		for _,x in ipairs(workspace:GetDescendants()) do if x:IsA("Decal") or x:IsA("Texture") then x.Transparency = 1 end end
 	end
-
 	if p == "SmoothPlastic" or p == "ExtraLow" or p == "UltraLow" then
-		for _,x in ipairs(workspace:GetDescendants()) do
-			if x:IsA("BasePart") then
-				x.Material = Enum.Material.SmoothPlastic
-			end
-		end
+		for _,x in ipairs(workspace:GetDescendants()) do if x:IsA("BasePart") then x.Material = Enum.Material.SmoothPlastic end end
 	end
-
 	if p == "TerrainSimplify" or p == "ExtraLow" or p == "UltraLow" then
 		local t = workspace:FindFirstChild("Terrain")
 		if t then
@@ -175,29 +120,16 @@ local function applyPreset(p)
 			t.WaterTransparency = 1
 		end
 	end
-
 	if p == "UltraLow" then
-		for _,x in ipairs(workspace:GetDescendants()) do
-			if x:IsA("BasePart") then
-				x.Color = Color3.new(0,0,0)
-			end
-		end
+		for _,x in ipairs(workspace:GetDescendants()) do if x:IsA("BasePart") then x.Color = Color3.new(0,0,0) end end
 	end
 end
 
 --------------------------------------------------
--- GRAPHICS BUTTONS
+-- CREATE PRESET BUTTONS
 --------------------------------------------------
 local presetNames = {
-	"Default",
-	"PostEffectsOff",
-	"ShadowsOff",
-	"DecalsOff",
-	"TexturesOff",
-	"SmoothPlastic",
-	"TerrainSimplify",
-	"ExtraLow",
-	"UltraLow"
+	"Default","PostEffectsOff","ShadowsOff","DecalsOff","TexturesOff","SmoothPlastic","TerrainSimplify","ExtraLow","UltraLow"
 }
 
 for _,name in ipairs(presetNames) do
@@ -206,24 +138,23 @@ for _,name in ipairs(presetNames) do
 	btn.Text = name
 	btn.TextColor3 = Color3.new(1,1,1)
 	btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
-
 	btn.MouseButton1Click:Connect(function()
 		applyPreset(name)
 	end)
 end
 
 --------------------------------------------------
--- GRAPHICS DROPDOWN (MUTUAL-CLOSE READY)
+-- GRAPHICS DROPDOWN LOGIC (SELF-CONTAINED)
 --------------------------------------------------
 local OPEN_SIZE = UDim2.new(0,125,0,180)
 local CLOSED_SIZE = UDim2.new(0,125,0,22)
+gfxFrame.Size = OPEN_SIZE
 
 toggleBtnLeft.MouseButton1Click:Connect(function()
 	gfxOpen = not gfxOpen
-	fpsOpen = false -- closes FPS when graphics opens
-
 	toggleBtnLeft.Text = gfxOpen and "▼" or "▶"
 
+	-- only resize the graphics frame itself
 	gfxFrame:TweenSize(
 		gfxOpen and OPEN_SIZE or CLOSED_SIZE,
 		Enum.EasingDirection.Out,
@@ -231,8 +162,6 @@ toggleBtnLeft.MouseButton1Click:Connect(function()
 		0.2,
 		true
 	)
-
-	updatePanelSize()
 end)
 
 --------------------------------------------------
@@ -242,7 +171,7 @@ local fpsFrame = Instance.new("Frame", panel)
 fpsFrame.Position = UDim2.new(0,135,0,0)
 fpsFrame.Size = UDim2.new(0,125,0,180)
 fpsFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
-fpsFrame.ClipsDescendants = true
+fpsFrame.ClipsDescendants = true -- prevents leftover background
 
 local topBarFPS = Instance.new("Frame", fpsFrame)
 topBarFPS.Size = UDim2.new(1,0,0,22)
@@ -316,18 +245,17 @@ for _,v in ipairs(fpsValues) do
 end
 
 --------------------------------------------------
--- FPS DROPDOWN (MUTUAL CLOSE + PANEL RESIZE)
+-- FPS DROPDOWN LOGIC (SELF-CONTAINED)
 --------------------------------------------------
 local OPEN_SIZE = UDim2.new(0,125,0,180)
 local CLOSED_SIZE = UDim2.new(0,125,0,22)
+fpsFrame.Size = OPEN_SIZE
 
 toggleBtnRight.MouseButton1Click:Connect(function()
 	fpsOpen = not fpsOpen
-	gfxOpen = false -- close graphics
-
 	toggleBtnRight.Text = fpsOpen and "▼" or "▶"
-	toggleBtnLeft.Text = "▶"
 
+	-- only resize the fps frame itself
 	fpsFrame:TweenSize(
 		fpsOpen and OPEN_SIZE or CLOSED_SIZE,
 		Enum.EasingDirection.Out,
@@ -335,15 +263,4 @@ toggleBtnRight.MouseButton1Click:Connect(function()
 		0.2,
 		true
 	)
-
-	-- force graphics closed visually
-	gfxFrame:TweenSize(
-		CLOSED_SIZE,
-		Enum.EasingDirection.Out,
-		Enum.EasingStyle.Quad,
-		0.2,
-		true
-	)
-
-	updatePanelSize()
 end)
