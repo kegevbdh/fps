@@ -1,12 +1,13 @@
 -- SERVICES
 local Players = game:GetService("Players")
 local Lighting = game:GetService("Lighting")
+local UIS = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 
 local plr = Players.LocalPlayer
 
 --------------------------------------------------
--- UI ROOT
+-- UI ROOT (unchanged)
 --------------------------------------------------
 local gui = Instance.new("ScreenGui")
 gui.Name = "FPS_GUI"
@@ -19,18 +20,13 @@ panel.Position = UDim2.new(0,20,0,20)
 panel.BackgroundColor3 = Color3.fromRGB(15,15,15)
 panel.Active = true
 
---------------------------------------------------
--- LEFT: GRAPHICS PRESETS
---------------------------------------------------
+-- LEFT: Graphics Presets
 local gfxFrame = Instance.new("Frame", panel)
 gfxFrame.Size = UDim2.new(0,125,0,180)
 gfxFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
-gfxFrame.ClipsDescendants = true
-
 local topBar = Instance.new("Frame", gfxFrame)
 topBar.Size = UDim2.new(1,0,0,22)
 topBar.BackgroundColor3 = Color3.fromRGB(30,30,30)
-
 local hdr = Instance.new("TextLabel", topBar)
 hdr.Size = UDim2.new(1,-22,1,0)
 hdr.BackgroundTransparency = 1
@@ -38,7 +34,6 @@ hdr.Text = "Graphics"
 hdr.Font = Enum.Font.SourceSansBold
 hdr.TextSize = 16
 hdr.TextColor3 = Color3.new(1,1,1)
-
 local toggleBtn = Instance.new("TextButton", topBar)
 toggleBtn.Size = UDim2.new(0,22,1,0)
 toggleBtn.Position = UDim2.new(1,-22,0,0)
@@ -46,7 +41,6 @@ toggleBtn.Text = "▼"
 toggleBtn.Font = Enum.Font.SourceSansBold
 toggleBtn.TextColor3 = Color3.new(1,1,1)
 toggleBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
-
 local presets = Instance.new("ScrollingFrame", gfxFrame)
 presets.Position = UDim2.new(0,3,0,24)
 presets.Size = UDim2.new(1,-6,1,-26)
@@ -55,106 +49,77 @@ presets.AutomaticCanvasSize = Enum.AutomaticSize.Y
 presets.BackgroundTransparency = 1
 Instance.new("UIListLayout", presets).Padding = UDim.new(0,4)
 
---------------------------------------------------
--- CACHE ORIGINAL GRAPHICS
---------------------------------------------------
+-- CACHE ORIGINALS
 local original = {}
-
 local function cache(o)
-	if o:IsA("BasePart") then
-		original[o] = {o.Material,o.Color,o.CastShadow}
-	elseif o:IsA("Decal") or o:IsA("Texture") then
-		original[o] = {o.Transparency}
+	if o:IsA("BasePart") then original[o] = {o.Material,o.Color,o.CastShadow} 
+	elseif o:IsA("Decal") or o:IsA("Texture") then original[o] = {o.Transparency} 
 	end
 end
-
 for _,o in pairs(workspace:GetDescendants()) do cache(o) end
 workspace.DescendantAdded:Connect(cache)
-
 local function restore()
 	for o,d in pairs(original) do
-		if o:IsA("BasePart") then
-			o.Material,o.Color,o.CastShadow = d[1],d[2],d[3]
-		else
-			o.Transparency = d[1]
+		if o:IsA("BasePart") then o.Material,o.Color,o.CastShadow = d[1],d[2],d[3] 
+		else o.Transparency = d[1] 
 		end
 	end
 end
 
---------------------------------------------------
--- GRAPHICS PRESETS LOGIC
---------------------------------------------------
-local function applyGraphics(p)
+-- PRESETS
+local function apply(p)
 	if p=="Default" then restore() return end
-
 	if p=="PostEffectsOff" or p=="ExtraLow" or p=="UltraLow" then
-		for _,e in pairs(Lighting:GetChildren()) do
-			if e:IsA("PostEffect") then e.Enabled=false end
-		end
+		for _,e in pairs(Lighting:GetChildren()) do if e:IsA("PostEffect") then e.Enabled=false end end
 	end
-
 	if p=="ShadowsOff" or p=="ExtraLow" or p=="UltraLow" then
 		Lighting.GlobalShadows=false
-		for _,x in pairs(workspace:GetDescendants()) do
-			if x:IsA("BasePart") then x.CastShadow=false end
-		end
+		for _,x in pairs(workspace:GetDescendants()) do if x:IsA("BasePart") then x.CastShadow=false end end
 	end
-
 	if p=="DecalsOff" or p=="TexturesOff" or p=="ExtraLow" or p=="UltraLow" then
-		for _,x in pairs(workspace:GetDescendants()) do
-			if x:IsA("Decal") or x:IsA("Texture") then x.Transparency=1 end
-		end
+		for _,x in pairs(workspace:GetDescendants()) do if x:IsA("Decal") or x:IsA("Texture") then x.Transparency=1 end end
 	end
-
 	if p=="SmoothPlastic" or p=="ExtraLow" or p=="UltraLow" then
-		for _,x in pairs(workspace:GetDescendants()) do
-			if x:IsA("BasePart") then x.Material=Enum.Material.SmoothPlastic end
-		end
+		for _,x in pairs(workspace:GetDescendants()) do if x:IsA("BasePart") then x.Material=Enum.Material.SmoothPlastic end end
 	end
-
+	if p=="TerrainSimplify" or p=="ExtraLow" or p=="UltraLow" then
+		local t=workspace:FindFirstChild("Terrain")
+		if t then t.WaterWaveSize,t.WaterWaveSpeed,t.WaterReflectance,t.WaterTransparency = 0,0,0,1 end
+	end
 	if p=="UltraLow" then
-		for _,x in pairs(workspace:GetDescendants()) do
-			if x:IsA("BasePart") then x.Color=Color3.new(0,0,0) end
-		end
+		for _,x in pairs(workspace:GetDescendants()) do if x:IsA("BasePart") then x.Color=Color3.new(0,0,0) end end
 	end
 end
 
-local gfxPresets = {"Default","PostEffectsOff","ShadowsOff","DecalsOff","TexturesOff","SmoothPlastic","ExtraLow","UltraLow"}
-
-for _,n in ipairs(gfxPresets) do
-	local b = Instance.new("TextButton", presets)
+local presetsList={"Default","PostEffectsOff","ShadowsOff","DecalsOff","TexturesOff","SmoothPlastic","TerrainSimplify","ExtraLow","UltraLow"}
+for _,n in ipairs(presetsList) do
+	local b=Instance.new("TextButton",presets)
 	b.Size=UDim2.new(1,0,0,22)
 	b.Text=n
 	b.TextColor3=Color3.new(1,1,1)
 	b.BackgroundColor3=Color3.fromRGB(40,40,40)
-	b.MouseButton1Click:Connect(function() applyGraphics(n) end)
+	b.MouseButton1Click:Connect(function() apply(n) end)
 end
 
--- GRAPHICS DROPDOWN
-local gOpen = true
-local gSize = gfxFrame.Size
+-- DROPDOWN (GRAPHICS)
+local gOpen=true
+local gSize=gfxFrame.Size
 toggleBtn.MouseButton1Click:Connect(function()
-	gOpen = not gOpen
+	gOpen=not gOpen
 	toggleBtn.Text=gOpen and "▼" or "▶"
-	gfxFrame:TweenSize(
-		gOpen and gSize or UDim2.new(gSize.X.Scale,gSize.X.Offset,0,22),
-		Enum.EasingDirection.Out,Enum.EasingStyle.Quad,0.2,true
-	)
+	gfxFrame:TweenSize(gOpen and gSize or UDim2.new(gSize.X.Scale,gSize.X.Offset,0,26), Enum.EasingDirection.Out,Enum.EasingStyle.Quad,0.2,true)
 end)
 
 --------------------------------------------------
--- RIGHT: FPS PRESETS (SAFE & LOGIC)
+-- RIGHT: FPS
 --------------------------------------------------
 local fpsFrame=Instance.new("Frame",panel)
 fpsFrame.Position=UDim2.new(0,135,0,0)
 fpsFrame.Size=UDim2.new(0,125,0,180)
 fpsFrame.BackgroundColor3=Color3.fromRGB(20,20,20)
-fpsFrame.ClipsDescendants=true
-
 local top2=Instance.new("Frame",fpsFrame)
 top2.Size=UDim2.new(1,0,0,22)
 top2.BackgroundColor3=Color3.fromRGB(30,30,30)
-
 local fpsHdr=Instance.new("TextLabel",top2)
 fpsHdr.Size=UDim2.new(1,-22,1,0)
 fpsHdr.BackgroundTransparency=1
@@ -162,7 +127,6 @@ fpsHdr.Text="FPS"
 fpsHdr.Font=Enum.Font.SourceSansBold
 fpsHdr.TextSize=16
 fpsHdr.TextColor3=Color3.new(1,1,1)
-
 local toggle2=Instance.new("TextButton",top2)
 toggle2.Size=UDim2.new(0,22,1,0)
 toggle2.Position=UDim2.new(1,-22,0,0)
@@ -171,21 +135,19 @@ toggle2.Font=Enum.Font.SourceSansBold
 toggle2.TextColor3=Color3.new(1,1,1)
 toggle2.BackgroundColor3=Color3.fromRGB(40,40,40)
 
--- SAFE FPS CAP LOGIC
+-- SAFE FPS LOGIC
 local targetFPS = 60
 local lastFrame = 0
-
 RunService.RenderStepped:Connect(function()
 	local now = os.clock()
 	local minDelta = 1/targetFPS
 	if now - lastFrame < minDelta then
-		return -- skip this frame
+		return
 	end
 	lastFrame = now
-	-- Here you can put any per-frame logic if needed
 end)
 
--- FPS PRESET BUTTONS
+-- FPS BUTTONS
 local fpsPresets={10,20,30,40,50,60}
 local y=26
 for _,fps in ipairs(fpsPresets) do
@@ -196,19 +158,16 @@ for _,fps in ipairs(fpsPresets) do
 	b.TextColor3=Color3.new(1,1,1)
 	b.BackgroundColor3=Color3.fromRGB(40,40,40)
 	b.MouseButton1Click:Connect(function()
-		targetFPS=fps -- THIS MAKES BUTTON WORK
+		targetFPS=fps -- THIS MAKES THE BUTTON WORK
 	end)
 	y=y+26
 end
 
--- FPS DROPDOWN
+-- DROPDOWN (FPS)
 local fOpen = true
 local fSize = fpsFrame.Size
 toggle2.MouseButton1Click:Connect(function()
 	fOpen = not fOpen
 	toggle2.Text = fOpen and "▼" or "▶"
-	fpsFrame:TweenSize(
-		fOpen and fSize or UDim2.new(fSize.X.Scale,fSize.X.Offset,0,22),
-		Enum.EasingDirection.Out,Enum.EasingStyle.Quad,0.2,true
-	)
+	fpsFrame:TweenSize(fOpen and fSize or UDim2.new(fSize.X.Scale,fSize.X.Offset,0,26), Enum.EasingDirection.Out,Enum.EasingStyle.Quad,0.2,true)
 end)
