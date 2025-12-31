@@ -1,8 +1,6 @@
 --------------------------------------------------
--- LEFT: Graphics Presets (FULL, FIXED)
---------------------------------------------------
-
 -- SERVICES
+--------------------------------------------------
 local Players = game:GetService("Players")
 local Lighting = game:GetService("Lighting")
 
@@ -21,15 +19,45 @@ panel.Size = UDim2.new(0,270,0,180)
 panel.Position = UDim2.new(0,20,0,20)
 panel.BackgroundColor3 = Color3.fromRGB(15,15,15)
 panel.Active = true
+panel.ClipsDescendants = true -- removes black background leftovers
 
 --------------------------------------------------
--- GRAPHICS FRAME
+-- SHARED DROPDOWN STATE (USED BY RIGHT SIDE TOO)
+--------------------------------------------------
+local PANEL_OPEN_HEIGHT = 180
+local PANEL_CLOSED_HEIGHT = 22
+
+local gfxOpen = true
+local fpsOpen = true -- will be controlled by right side later
+
+local function updatePanelSize()
+	if gfxOpen or fpsOpen then
+		panel:TweenSize(
+			UDim2.new(0,270,0,PANEL_OPEN_HEIGHT),
+			Enum.EasingDirection.Out,
+			Enum.EasingStyle.Quad,
+			0.2,
+			true
+		)
+	else
+		panel:TweenSize(
+			UDim2.new(0,270,0,PANEL_CLOSED_HEIGHT),
+			Enum.EasingDirection.Out,
+			Enum.EasingStyle.Quad,
+			0.2,
+			true
+		)
+	end
+end
+
+--------------------------------------------------
+-- LEFT: GRAPHICS FRAME
 --------------------------------------------------
 local gfxFrame = Instance.new("Frame", panel)
-gfxFrame.Size = UDim2.new(0,125,0,180)
 gfxFrame.Position = UDim2.new(0,0,0,0)
+gfxFrame.Size = UDim2.new(0,125,0,180)
 gfxFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
-gfxFrame.ClipsDescendants = true -- IMPORTANT: prevents black overlay
+gfxFrame.ClipsDescendants = true
 
 local topBar = Instance.new("Frame", gfxFrame)
 topBar.Size = UDim2.new(1,0,0,22)
@@ -43,16 +71,16 @@ hdr.Font = Enum.Font.SourceSansBold
 hdr.TextSize = 16
 hdr.TextColor3 = Color3.new(1,1,1)
 
-local toggleBtn = Instance.new("TextButton", topBar)
-toggleBtn.Size = UDim2.new(0,22,1,0)
-toggleBtn.Position = UDim2.new(1,-22,0,0)
-toggleBtn.Text = "▼"
-toggleBtn.Font = Enum.Font.SourceSansBold
-toggleBtn.TextColor3 = Color3.new(1,1,1)
-toggleBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+local toggleBtnLeft = Instance.new("TextButton", topBar)
+toggleBtnLeft.Size = UDim2.new(0,22,1,0)
+toggleBtnLeft.Position = UDim2.new(1,-22,0,0)
+toggleBtnLeft.Text = "▼"
+toggleBtnLeft.Font = Enum.Font.SourceSansBold
+toggleBtnLeft.TextColor3 = Color3.new(1,1,1)
+toggleBtnLeft.BackgroundColor3 = Color3.fromRGB(40,40,40)
 
 --------------------------------------------------
--- PRESETS LIST
+-- GRAPHICS PRESET LIST
 --------------------------------------------------
 local presets = Instance.new("ScrollingFrame", gfxFrame)
 presets.Position = UDim2.new(0,3,0,24)
@@ -90,14 +118,14 @@ local function restore()
 			o.Material = d[1]
 			o.Color = d[2]
 			o.CastShadow = d[3]
-		elseif o:IsA("Decal") or o:IsA("Texture") then
+		else
 			o.Transparency = d[1]
 		end
 	end
 end
 
 --------------------------------------------------
--- APPLY PRESET
+-- APPLY GRAPHICS PRESET
 --------------------------------------------------
 local function applyPreset(p)
 	if p == "Default" then
@@ -158,7 +186,7 @@ local function applyPreset(p)
 end
 
 --------------------------------------------------
--- PRESET BUTTONS
+-- GRAPHICS BUTTONS
 --------------------------------------------------
 local presetNames = {
 	"Default",
@@ -185,56 +213,56 @@ for _,name in ipairs(presetNames) do
 end
 
 --------------------------------------------------
--- DROPDOWN LOGIC (FIXED)
+-- GRAPHICS DROPDOWN (MUTUAL-CLOSE READY)
 --------------------------------------------------
 local OPEN_SIZE = UDim2.new(0,125,0,180)
 local CLOSED_SIZE = UDim2.new(0,125,0,22)
-local open = true
 
-toggleBtn.MouseButton1Click:Connect(function()
-	open = not open
-	toggleBtn.Text = open and "▼" or "▶"
+toggleBtnLeft.MouseButton1Click:Connect(function()
+	gfxOpen = not gfxOpen
+	fpsOpen = false -- closes FPS when graphics opens
+
+	toggleBtnLeft.Text = gfxOpen and "▼" or "▶"
+
 	gfxFrame:TweenSize(
-		open and OPEN_SIZE or CLOSED_SIZE,
+		gfxOpen and OPEN_SIZE or CLOSED_SIZE,
 		Enum.EasingDirection.Out,
 		Enum.EasingStyle.Quad,
 		0.2,
 		true
 	)
+
+	updatePanelSize()
 end)
 
 --------------------------------------------------
--- RIGHT: FPS PANEL (FULL, FIXED)
---------------------------------------------------
-
---------------------------------------------------
--- FPS FRAME
+-- RIGHT: FPS FRAME
 --------------------------------------------------
 local fpsFrame = Instance.new("Frame", panel)
 fpsFrame.Position = UDim2.new(0,135,0,0)
 fpsFrame.Size = UDim2.new(0,125,0,180)
 fpsFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
-fpsFrame.ClipsDescendants = true -- IMPORTANT
+fpsFrame.ClipsDescendants = true
 
-local topBar = Instance.new("Frame", fpsFrame)
-topBar.Size = UDim2.new(1,0,0,22)
-topBar.BackgroundColor3 = Color3.fromRGB(30,30,30)
+local topBarFPS = Instance.new("Frame", fpsFrame)
+topBarFPS.Size = UDim2.new(1,0,0,22)
+topBarFPS.BackgroundColor3 = Color3.fromRGB(30,30,30)
 
-local hdr = Instance.new("TextLabel", topBar)
-hdr.Size = UDim2.new(1,-22,1,0)
-hdr.BackgroundTransparency = 1
-hdr.Text = "FPS"
-hdr.Font = Enum.Font.SourceSansBold
-hdr.TextSize = 16
-hdr.TextColor3 = Color3.new(1,1,1)
+local fpsHdr = Instance.new("TextLabel", topBarFPS)
+fpsHdr.Size = UDim2.new(1,-22,1,0)
+fpsHdr.BackgroundTransparency = 1
+fpsHdr.Text = "FPS"
+fpsHdr.Font = Enum.Font.SourceSansBold
+fpsHdr.TextSize = 16
+fpsHdr.TextColor3 = Color3.new(1,1,1)
 
-local toggleBtn = Instance.new("TextButton", topBar)
-toggleBtn.Size = UDim2.new(0,22,1,0)
-toggleBtn.Position = UDim2.new(1,-22,0,0)
-toggleBtn.Text = "▼"
-toggleBtn.Font = Enum.Font.SourceSansBold
-toggleBtn.TextColor3 = Color3.new(1,1,1)
-toggleBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+local toggleBtnRight = Instance.new("TextButton", topBarFPS)
+toggleBtnRight.Size = UDim2.new(0,22,1,0)
+toggleBtnRight.Position = UDim2.new(1,-22,0,0)
+toggleBtnRight.Text = "▼"
+toggleBtnRight.Font = Enum.Font.SourceSansBold
+toggleBtnRight.TextColor3 = Color3.new(1,1,1)
+toggleBtnRight.BackgroundColor3 = Color3.fromRGB(40,40,40)
 
 --------------------------------------------------
 -- FIND FPS CAPPER (DELTA / SYN / GLOBAL)
@@ -250,7 +278,7 @@ end
 local setCap = findCapper()
 
 --------------------------------------------------
--- FPS OPTIONS
+-- FPS BUTTONS
 --------------------------------------------------
 local fpsValues = {10,20,30,40,50,60}
 local fpsButtons = {}
@@ -269,15 +297,15 @@ for _,v in ipairs(fpsValues) do
 	table.insert(fpsButtons, btn)
 
 	btn.MouseButton1Click:Connect(function()
-		-- Reset all buttons
+		-- reset all buttons
 		for _,b in ipairs(fpsButtons) do
 			b.BackgroundColor3 = Color3.fromRGB(40,40,40)
 		end
 
-		-- Apply FPS cap
+		-- apply cap
 		if setCap then
 			setCap(v)
-			btn.BackgroundColor3 = Color3.fromRGB(0,120,0) -- selected
+			btn.BackgroundColor3 = Color3.fromRGB(0,120,0)
 		else
 			btn.Text = "No API"
 			btn.BackgroundColor3 = Color3.fromRGB(120,0,0)
@@ -288,20 +316,34 @@ for _,v in ipairs(fpsValues) do
 end
 
 --------------------------------------------------
--- DROPDOWN LOGIC (FIXED)
+-- FPS DROPDOWN (MUTUAL CLOSE + PANEL RESIZE)
 --------------------------------------------------
 local OPEN_SIZE = UDim2.new(0,125,0,180)
 local CLOSED_SIZE = UDim2.new(0,125,0,22)
-local open = true
 
-toggleBtn.MouseButton1Click:Connect(function()
-	open = not open
-	toggleBtn.Text = open and "▼" or "▶"
+toggleBtnRight.MouseButton1Click:Connect(function()
+	fpsOpen = not fpsOpen
+	gfxOpen = false -- close graphics
+
+	toggleBtnRight.Text = fpsOpen and "▼" or "▶"
+	toggleBtnLeft.Text = "▶"
+
 	fpsFrame:TweenSize(
-		open and OPEN_SIZE or CLOSED_SIZE,
+		fpsOpen and OPEN_SIZE or CLOSED_SIZE,
 		Enum.EasingDirection.Out,
 		Enum.EasingStyle.Quad,
 		0.2,
 		true
 	)
+
+	-- force graphics closed visually
+	gfxFrame:TweenSize(
+		CLOSED_SIZE,
+		Enum.EasingDirection.Out,
+		Enum.EasingStyle.Quad,
+		0.2,
+		true
+	)
+
+	updatePanelSize()
 end)
