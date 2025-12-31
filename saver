@@ -138,7 +138,7 @@ toggle2.Font=Enum.Font.SourceSansBold
 toggle2.TextColor3=Color3.new(1,1,1)
 toggle2.BackgroundColor3=Color3.fromRGB(40,40,40)
 
--- Executor API check
+-- Find Delta's setfpscap
 local function findCapper()
     local g = getgenv and getgenv() or {}
     return g.setfpscap
@@ -161,7 +161,7 @@ for _,v in ipairs(fpsValues) do
 
     opt.MouseButton1Click:Connect(function()
         if cap then
-            cap(v)
+            cap(v) -- Delta executor applies FPS cap here
             opt.BackgroundColor3 = Color3.fromRGB(0,100,0)
         else
             opt.Text = "No API"
