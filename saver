@@ -135,16 +135,19 @@ toggle2.Font=Enum.Font.SourceSansBold
 toggle2.TextColor3=Color3.new(1,1,1)
 toggle2.BackgroundColor3=Color3.fromRGB(40,40,40)
 
--- SAFE FPS LOGIC
+-- SAFE FPS LOGIC (fixed)
 local targetFPS = 60
-local lastFrame = 0
+local lastFrame = os.clock()
+
 RunService.RenderStepped:Connect(function()
-	local now = os.clock()
-	local minDelta = 1/targetFPS
-	if now - lastFrame < minDelta then
-		return
-	end
-	lastFrame = now
+    local minDelta = 1 / targetFPS
+    local now = os.clock()
+    local delta = now - lastFrame
+    if delta < minDelta then
+        -- wait until enough time has passed before continuing
+        task.wait(minDelta - delta)
+    end
+    lastFrame = os.clock()
 end)
 
 -- FPS BUTTONS
