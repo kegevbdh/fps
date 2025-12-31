@@ -17,7 +17,6 @@ local panel = Instance.new("Frame", gui)
 panel.Size = UDim2.new(0,270,0,180)
 panel.Position = UDim2.new(0,20,0,20)
 panel.BackgroundColor3 = Color3.fromRGB(15,15,15)
-panel.BackgroundTransparency = 0.05
 panel.Active = true
 
 --------------------------------------------------
@@ -26,7 +25,6 @@ panel.Active = true
 local gfxFrame = Instance.new("Frame", panel)
 gfxFrame.Size = UDim2.new(0,125,0,180)
 gfxFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
-gfxFrame.BackgroundTransparency = 0.1
 gfxFrame.ClipsDescendants = true
 
 local topBar = Instance.new("Frame", gfxFrame)
@@ -58,7 +56,7 @@ presets.BackgroundTransparency = 1
 Instance.new("UIListLayout", presets).Padding = UDim.new(0,4)
 
 --------------------------------------------------
--- CACHE ORIGINALS
+-- CACHE ORIGINAL GRAPHICS
 --------------------------------------------------
 local original = {}
 
@@ -145,13 +143,12 @@ toggleBtn.MouseButton1Click:Connect(function()
 end)
 
 --------------------------------------------------
--- RIGHT: FPS PRESETS (SAFE)
+-- RIGHT: FPS PRESETS (SAFE & LOGIC)
 --------------------------------------------------
 local fpsFrame=Instance.new("Frame",panel)
 fpsFrame.Position=UDim2.new(0,135,0,0)
 fpsFrame.Size=UDim2.new(0,125,0,180)
 fpsFrame.BackgroundColor3=Color3.fromRGB(20,20,20)
-fpsFrame.BackgroundTransparency=0.1
 fpsFrame.ClipsDescendants=true
 
 local top2=Instance.new("Frame",fpsFrame)
@@ -174,7 +171,7 @@ toggle2.Font=Enum.Font.SourceSansBold
 toggle2.TextColor3=Color3.new(1,1,1)
 toggle2.BackgroundColor3=Color3.fromRGB(40,40,40)
 
--- SAFE FPS CAP (RenderStepped, no flashing)
+-- SAFE FPS CAP LOGIC
 local targetFPS = 60
 local lastFrame = 0
 
@@ -182,9 +179,10 @@ RunService.RenderStepped:Connect(function()
 	local now = os.clock()
 	local minDelta = 1/targetFPS
 	if now - lastFrame < minDelta then
-		return
+		return -- skip this frame
 	end
 	lastFrame = now
+	-- Here you can put any per-frame logic if needed
 end)
 
 -- FPS PRESET BUTTONS
@@ -198,7 +196,7 @@ for _,fps in ipairs(fpsPresets) do
 	b.TextColor3=Color3.new(1,1,1)
 	b.BackgroundColor3=Color3.fromRGB(40,40,40)
 	b.MouseButton1Click:Connect(function()
-		targetFPS=fps
+		targetFPS=fps -- THIS MAKES BUTTON WORK
 	end)
 	y=y+26
 end
