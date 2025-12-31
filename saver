@@ -12,13 +12,13 @@ gui.ResetOnSpawn = false
 gui.Parent = plr:WaitForChild("PlayerGui")
 
 local panel = Instance.new("Frame", gui)
-panel.Size = UDim2.new(0,270,0,240)
+panel.Size = UDim2.new(0,270,0,220)
 panel.Position = UDim2.new(0,20,0,20)
-panel.BackgroundColor3 = Color3.fromRGB(15,15,15)
+panel.BackgroundTransparency = 1
 panel.Active = true
 
 --------------------------------------------------
--- TOP BAR (MASTER DROPDOWN)
+-- TOP BAR (SINGLE DROPDOWN)
 --------------------------------------------------
 local topBar = Instance.new("Frame", panel)
 topBar.Size = UDim2.new(1,0,0,26)
@@ -52,7 +52,7 @@ local layout = Instance.new("UIListLayout", content)
 layout.Padding = UDim.new(0,6)
 
 --------------------------------------------------
--- GRAPHICS PRESETS
+-- GRAPHICS PRESETS (UNCHANGED)
 --------------------------------------------------
 local presets = Instance.new("ScrollingFrame", content)
 presets.Size = UDim2.new(1,-10,0,130)
@@ -91,13 +91,12 @@ end
 -- PRESETS
 --------------------------------------------------
 local function apply(p)
-	if p=="Default" then restore() return end
-	if p=="UltraLow" then
+	if p == "Default" then restore() return end
+	if p == "UltraLow" then
 		for _,x in pairs(workspace:GetDescendants()) do
 			if x:IsA("BasePart") then
 				x.Material = Enum.Material.SmoothPlastic
 				x.CastShadow = false
-				x.Color = Color3.new(0,0,0)
 			end
 		end
 		Lighting.GlobalShadows = false
@@ -105,18 +104,18 @@ local function apply(p)
 end
 
 for _,n in ipairs({"Default","ExtraLow","UltraLow"}) do
-	local b=Instance.new("TextButton",presets)
-	b.Size=UDim2.new(1,0,0,22)
-	b.Text=n
-	b.TextColor3=Color3.new(1,1,1)
-	b.BackgroundColor3=Color3.fromRGB(40,40,40)
+	local b = Instance.new("TextButton", presets)
+	b.Size = UDim2.new(1,0,0,22)
+	b.Text = n
+	b.TextColor3 = Color3.new(1,1,1)
+	b.BackgroundColor3 = Color3.fromRGB(40,40,40)
 	b.MouseButton1Click:Connect(function()
 		apply(n)
 	end)
 end
 
 --------------------------------------------------
--- FPS LIMITER (10–60)
+-- FPS LIMITER MENU (10–60 ONLY)
 --------------------------------------------------
 local fpsBox = Instance.new("Frame", content)
 fpsBox.Size = UDim2.new(1,-10,0,80)
@@ -141,17 +140,16 @@ end)
 for fps = 10, 60, 10 do
 	local b = Instance.new("TextButton", fpsBox)
 	b.Size = UDim2.new(1,0,0,22)
-	b.Text = "FPS Cap: "..fps
+	b.Text = "FPS Limit: "..fps
 	b.TextColor3 = Color3.new(1,1,1)
 	b.BackgroundColor3 = Color3.fromRGB(40,40,40)
-
 	b.MouseButton1Click:Connect(function()
 		fpsCap = fps
 	end)
 end
 
 --------------------------------------------------
--- MASTER DROPDOWN
+-- MASTER DROPDOWN TOGGLE
 --------------------------------------------------
 local open = true
 local fullSize = panel.Size
@@ -160,7 +158,7 @@ toggleBtn.MouseButton1Click:Connect(function()
 	open = not open
 	toggleBtn.Text = open and "▼" or "▶"
 	panel:TweenSize(
-		open and fullSize or UDim2.new(fullSize.X.Scale,fullSize.X.Offset,0,26),
+		open and fullSize or UDim2.new(fullSize.X.Scale, fullSize.X.Offset, 0, 26),
 		Enum.EasingDirection.Out,
 		Enum.EasingStyle.Quad,
 		0.25,
